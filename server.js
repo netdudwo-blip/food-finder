@@ -1,6 +1,10 @@
 'use strict';
 // Zero-dependency Node.js web server (Node 20+)
 const http=require('node:http');
+const https=require('node:https');
+const dns=require('node:dns').promises;
+const net=require('node:net');
+const tls=require('node:tls');
 const fs=require('node:fs');
 const path=require('node:path');
 const root=__dirname;
@@ -15,40 +19,136 @@ const ING={'177203860016':['찹쌀','흰쌀튀밥','식용유','조청']};
 const key=()=>process.env.FOODSAFETY_API_KEY?.trim()||'';
 function send(res,status,obj){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(obj));}
 function validReport(v){return /^[0-9A-Za-z-]{4,40}$/.test(v)}
+// Core HTTP(S) client uses family:4 to avoid broken IPv6 routes on some hosts.
+// Upstream destination is fixed in production; never log request paths containing the key.
+const HOST='openapi.foodsafetykorea.go.kr';
+function remoteRequest({protocol,relativePath,timeoutMs=12000,host=HOST,port}){
+ return new Promise((resolve,reject)=>{
+  let req,stage='DNS',socketAddress='',finished=false;
+  const began=Date.now();
+  const fail=(code,phase)=>{
+   if(finished)return;
+   finished=true;clearTimeout(deadline);
+   const error=new Error(`${phase}: ${code}`);
+   error.code=code;error.stage=phase;error.elapsed_ms=Date.now()-began;
+   reject(error);
+  };
+  const deadline=setTimeout(()=>{
+   const oldStage=stage;
+   req?.destroy();fail('TIMEOUT',oldStage);
+  },timeoutMs);
+  const proto=protocol==='https'?https:http;
+  try{
+   req=proto.request({
+    protocol:protocol+':',hostname:host,port:port||(protocol==='https'?443:80),
+    path:relativePath,method:'GET',family:4,servername:protocol==='https'?host:undefined,
+    headers:{'Accept':'application/json','User-Agent':'FoodFinderWeb/0.3'}
+   },res=>{
+    stage='response_body';
+    const chunks=[];let size=0;
+    res.on('data',chunk=>{
+     size+=chunk.length;
+     if(size>3*1024*1024){req.destroy();fail('RESPONSE_TOO_LARGE',stage);return;}
+     chunks.push(chunk);
+    });
+    res.on('error',e=>fail(e.code||'RESPONSE_ERROR',stage));
+    res.on('end',()=>{
+     if(finished)return;
+     finished=true;clearTimeout(deadline);
+     const elapsed_ms=Date.now()-began;
+     const raw=Buffer.concat(chunks).toString('utf8');
+     if(res.statusCode!==200){
+      const e=new Error(`HTTP_${res.statusCode}`);e.code=`HTTP_${res.statusCode}`;e.stage='HTTP';
+      e.elapsed_ms=elapsed_ms;reject(e);return;
+     }
+     try{resolve({data:JSON.parse(raw),meta:{protocol,elapsed_ms,remote_ipv4:socketAddress}});}
+     catch{const e=new Error('INVALID_JSON');e.code='INVALID_JSON';e.stage='response_body';reject(e);}
+    });
+   });
+   req.on('socket',socket=>{
+    socket.on('lookup',(err,address)=>{if(!err){socketAddress=address;stage='TCP';}});
+    socket.on('connect',()=>{stage=protocol==='https'?'TLS':'waiting_response';});
+    socket.on('secureConnect',()=>{stage='waiting_response';});
+   });
+   req.on('error',e=>fail(e.code||'NETWORK_ERROR',stage));
+   req.end();
+  }catch(e){fail(e.code||'REQUEST_ERROR',stage);}
+ });
+}
+function interpretApiData(data,service){
+ const section=data?.[service]||{},result=section.RESULT||data.RESULT||{};
+ const code=result.CODE||((section.row||[]).length?'INFO-000':'UNKNOWN');
+ if(['INFO-200','INFO-300'].includes(code))return {rows:[],total:0};
+ if(code!=='INFO-000')throw Object.assign(new Error(`식품안전나라 API 응답: ${code} / ${result.MSG||'확인 필요'}`),{status:502});
+ return {rows:Array.isArray(section.row)?section.row:[],total:Number(section.total_count||0)};
+}
 async function fetchAPI(service,field,term,limit){
  const k=key();if(!k)throw Object.assign(new Error('서버에 FOODSAFETY_API_KEY가 설정되지 않았습니다.'),{status:503});
  if(!/^[a-zA-Z0-9_-]+$/.test(k))throw Object.assign(new Error('API 키 형식이 올바르지 않습니다.'),{status:503});
  if(!['I1250','C002'].includes(service)||!['PRDLST_NM','PRDLST_REPORT_NO'].includes(field))throw new Error('허용되지 않은 조회 조건');
- // 식품안전나라 공식 문서는 HTTP를 안내합니다. HTTPS가 가능한 환경도 있으므로
- // HTTPS를 먼저 시도하고 연결 자체가 실패할 때만 HTTP로 재시도합니다.
- let data, failures=[];
  const suffix=`/api/${k}/${service}/json/1/${limit}/${field}=${encodeURIComponent(term)}`;
+ const failures=[];
+ // Secure HTTPS first. API official documentation also offers HTTP, used only as fallback.
  for(const protocol of ['https','http']){
-  const url=`${protocol}://openapi.foodsafetykorea.go.kr${suffix}`;
-  try {
-   const response=await fetch(url,{signal:AbortSignal.timeout(10000),headers:{'User-Agent':'FoodFinderWeb/0.2','Accept':'application/json'}});
-   if(!response.ok){
-    throw Object.assign(new Error(`HTTP ${response.status}`),{httpResponse:true});
-   }
-   data=await response.json();
-   break;
-  } catch(e) {
-   // 인증키가 포함된 URL은 로그나 클라이언트에 절대 노출하지 않습니다.
-   const reason=e.name==='TimeoutError'?'요청 시간 초과':e.httpResponse?e.message:(e.cause?.code||e.code||e.name||'연결 오류');
-   failures.push(`${protocol.toUpperCase()}: ${reason}`);
-   if(e.httpResponse)break;
+  try{
+   const {data}=await remoteRequest({protocol,relativePath:suffix,timeoutMs:14000});
+   return interpretApiData(data,service);
+  }catch(e){
+   if(e.status)throw e;  // Valid API JSON with an authentication/permission error: don't retry.
+   const reason=`${protocol.toUpperCase()} ${e.stage||'network'} ${e.code||'UNKNOWN'}`;
+   failures.push(reason);
+   if(/^HTTP_4/.test(e.code||''))break;
   }
  }
- if(!data)throw Object.assign(new Error(`식품안전나라 API 네트워크 오류 (${failures.join(' / ')})`),{status:502});
- const section=data?.[service]||{},result=section.RESULT||data.RESULT||{},code=result.CODE||'INFO-000';
- if(code==='INFO-200')return {rows:[],total:0};
- if(code!=='INFO-000')throw Object.assign(new Error(`식품안전나라 API 응답: ${code} / ${result.MSG||'확인 필요'}`),{status:502});
- return {rows:section.row||[],total:Number(section.total_count||0)};
+ throw Object.assign(new Error(`식품안전나라 연결 오류: ${failures.join(' / ')}. 네트워크 진단 페이지(/diagnostics)를 확인하세요.`),{status:502});
 }
+function portProbe(port,secure,timeoutMs=6000){
+ return new Promise(resolve=>{
+  const began=Date.now();let finished=false;
+  const finish=(ok,reason)=>{
+   if(finished)return;finished=true;clearTimeout(timer);
+   socket.destroy();resolve({ok,detail:reason,ms:Date.now()-began});
+  };
+  const socket=secure?tls.connect({host:HOST,port,servername:HOST,family:4,rejectUnauthorized:true}):net.createConnection({host:HOST,port,family:4});
+  const timer=setTimeout(()=>finish(false,'TIMEOUT'),timeoutMs);
+  socket.on(secure?'secureConnect':'connect',()=>finish(true,'connected'));
+  socket.on('error',e=>finish(false,e.code||'NETWORK_ERROR'));
+ });
+}
+let diagnosticCache=null;
+async function diagnose(){
+ const now=Date.now();
+ if(diagnosticCache&&now<diagnosticCache.expires)return diagnosticCache.promise;
+ const promise=(async()=>{
+  const report={version:'0.3',api_key_configured:!!key(),tested_at:new Date().toISOString(),tests:[]};
+  try{
+   const started=Date.now();const records=await dns.lookup(HOST,{family:4,all:true});
+   report.tests.push({name:'DNS IPv4',ok:records.length>0,detail:records.map(x=>x.address).join(', '),ms:Date.now()-started});
+  }catch(e){report.tests.push({name:'DNS IPv4',ok:false,detail:e.code||'DNS_ERROR'});}
+  const [p80,p443]=await Promise.all([portProbe(80,false),portProbe(443,true)]);
+  report.tests.push({name:'TCP 80 (HTTP)',...p80},{name:'TLS 443 (HTTPS)',...p443});
+  if(!key())return report;
+  const suffix=`/api/${key()}/I1250/json/1/1`;
+  const checks=await Promise.all(['https','http'].map(async protocol=>{
+   try{
+    const {data,meta}=await remoteRequest({protocol,relativePath:suffix,timeoutMs:8000});
+    const result=data?.I1250?.RESULT||data?.RESULT||{};
+    return {name:`I1250 ${protocol.toUpperCase()}`,ok:result.CODE==='INFO-000',detail:result.CODE||'NO_RESULT_CODE',ms:meta.elapsed_ms};
+   }catch(e){return {name:`I1250 ${protocol.toUpperCase()}`,ok:false,detail:`${e.stage||'network'}: ${e.code||'UNKNOWN'}`,ms:e.elapsed_ms||null};}
+  }));
+  report.tests.push(...checks);
+  return report;
+ })();
+ diagnosticCache={expires:now+120000,promise};
+ return promise;
+}
+const DIAGNOSTICS_HTML=`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FOOD FINDER 연결 진단</title><style>body{font-family:system-ui,sans-serif;background:#f6faf9;color:#18332e;margin:0;padding:24px}main{max-width:720px;margin:auto}h1{font-size:27px}.sub{color:#526b64}article{background:white;border:1px solid #dfeae5;padding:16px;border-radius:12px;margin:10px 0}.good{color:#087d56}.bad{color:#b14527}small{color:#777}button{border:0;border-radius:8px;background:#0a8068;color:white;padding:12px 16px;cursor:pointer}code{font-family:ui-monospace,monospace}pre{background:#e9f0ed;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere}.tip{padding:16px;background:#fff8e9;border:1px solid #ecdcab;border-radius:8px}</style><main><h1>FOOD FINDER 연결 진단</h1><p class="sub">Render 서버가 식품안전나라에 연결되는지 확인합니다. 인증키는 화면에 표시되지 않습니다.</p><p id="summary">확인 중…</p><div id="results"></div><p class="tip">화면의 진단 결과를 캡처해서 공유해 주세요. API 인증키를 공유할 필요는 없습니다.</p><button id="again">다시 확인</button><script>async function run(){document.getElementById('summary').textContent='확인 중…';document.getElementById('results').replaceChildren();try{const r=await fetch('/api/diagnostics');const d=await r.json();document.getElementById('summary').textContent=d.api_key_configured?'인증키 설정 확인됨 · 서버 연결 결과는 아래 참고':'인증키가 설정되어 있지 않습니다';for(const t of d.tests){const card=document.createElement('article');const h=document.createElement('strong');h.textContent=(t.ok?'✅ ':'❌ ')+t.name;h.className=t.ok?'good':'bad';const p=document.createElement('p');p.textContent=t.detail||'';const s=document.createElement('small');s.textContent=t.ms==null?'':t.ms+'ms';card.append(h,p,s);document.getElementById('results').append(card)}}catch(e){document.getElementById('summary').textContent='진단 요청 실패: '+e.message}}document.getElementById('again').onclick=run;run()</script></main></html>`;
 async function route(req,res){
  const u=new URL(req.url,'http://localhost');
  if(req.method!=='GET')return send(res,405,{error:'허용되지 않는 요청입니다.'});
- if(u.pathname==='/health')return send(res,200,{status:'ok',api_configured:!!key()});
+ if(u.pathname==='/health')return send(res,200,{status:'ok',api_configured:!!key(),version:'0.3'});
+ if(u.pathname==='/api/diagnostics')return send(res,200,await diagnose());
+ if(u.pathname==='/diagnostics'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});return res.end(DIAGNOSTICS_HTML);}
  if(u.pathname==='/api/search'){
   const q=(u.searchParams.get('q')||'').trim(), mode=u.searchParams.get('mode')||'live';
   if(q.length<2||q.length>80)return send(res,400,{error:'검색어는 2~80자로 입력해 주세요.'});
@@ -92,4 +192,4 @@ async function route(req,res){
 }
 const server=http.createServer((req,res)=>route(req,res).catch(e=>{console.error('Request error:',e.message);send(res,e.status||500,{error:e.status?e.message:'서버 오류가 발생했습니다.'})}));
 if(require.main===module)server.listen(PORT,'0.0.0.0',()=>console.log(`FOOD FINDER listening on ${PORT}`));
-module.exports={server,DEMO};
+module.exports={server,DEMO,remoteRequest,interpretApiData};
