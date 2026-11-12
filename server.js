@@ -19,12 +19,29 @@ async function fetchAPI(service,field,term,limit){
  const k=key();if(!k)throw Object.assign(new Error('서버에 FOODSAFETY_API_KEY가 설정되지 않았습니다.'),{status:503});
  if(!/^[a-zA-Z0-9_-]+$/.test(k))throw Object.assign(new Error('API 키 형식이 올바르지 않습니다.'),{status:503});
  if(!['I1250','C002'].includes(service)||!['PRDLST_NM','PRDLST_REPORT_NO'].includes(field))throw new Error('허용되지 않은 조회 조건');
- const url=`https://openapi.foodsafetykorea.go.kr/api/${k}/${service}/json/1/${limit}/${field+'='+encodeURIComponent(term)}`;
- let response, data;
- try {response=await fetch(url,{signal:AbortSignal.timeout(16000),headers:{'User-Agent':'FoodFinderWeb/0.1'}});if(!response.ok)throw new Error('HTTP '+response.status);data=await response.json()}
- catch(e){throw Object.assign(new Error('식품안전나라 연결 실패 또는 시간 초과'),{status:502})}
+ // 식품안전나라 공식 문서는 HTTP를 안내합니다. HTTPS가 가능한 환경도 있으므로
+ // HTTPS를 먼저 시도하고 연결 자체가 실패할 때만 HTTP로 재시도합니다.
+ let data, failures=[];
+ const suffix=`/api/${k}/${service}/json/1/${limit}/${field}=${encodeURIComponent(term)}`;
+ for(const protocol of ['https','http']){
+  const url=`${protocol}://openapi.foodsafetykorea.go.kr${suffix}`;
+  try {
+   const response=await fetch(url,{signal:AbortSignal.timeout(10000),headers:{'User-Agent':'FoodFinderWeb/0.2','Accept':'application/json'}});
+   if(!response.ok){
+    throw Object.assign(new Error(`HTTP ${response.status}`),{httpResponse:true});
+   }
+   data=await response.json();
+   break;
+  } catch(e) {
+   // 인증키가 포함된 URL은 로그나 클라이언트에 절대 노출하지 않습니다.
+   const reason=e.name==='TimeoutError'?'요청 시간 초과':e.httpResponse?e.message:(e.cause?.code||e.code||e.name||'연결 오류');
+   failures.push(`${protocol.toUpperCase()}: ${reason}`);
+   if(e.httpResponse)break;
+  }
+ }
+ if(!data)throw Object.assign(new Error(`식품안전나라 API 네트워크 오류 (${failures.join(' / ')})`),{status:502});
  const section=data?.[service]||{},result=section.RESULT||data.RESULT||{},code=result.CODE||'INFO-000';
- if(['INFO-200','INFO-300'].includes(code))return {rows:[],total:0};
+ if(code==='INFO-200')return {rows:[],total:0};
  if(code!=='INFO-000')throw Object.assign(new Error(`식품안전나라 API 응답: ${code} / ${result.MSG||'확인 필요'}`),{status:502});
  return {rows:section.row||[],total:Number(section.total_count||0)};
 }
