@@ -1,0 +1,14 @@
+'use strict';
+const {test,after}=require('node:test');
+const assert=require('node:assert/strict');
+const {server}=require('./server');
+server.listen(0,'127.0.0.1');
+const url=()=>`http://127.0.0.1:${server.address().port}`;
+after(()=>server.close());
+test('homepage responds',async()=>{const r=await fetch(url());assert.equal(r.status,200);assert.match(await r.text(),/FOOD FINDER/)});
+test('JS and CSS static assets respond',async()=>{for(const p of ['/static/app.js','/static/style.css'])assert.equal((await fetch(url()+p)).status,200)});
+test('health responds',async()=>{const r=await fetch(url()+'/health');assert.equal((await r.json()).status,'ok')});
+test('demo search and duplicate identity fields',async()=>{const r=await fetch(url()+'/api/search?q='+encodeURIComponent('간장')+'&mode=demo');const j=await r.json();assert.ok(j.rows.length>0);assert.ok(j.rows[0].PRDLST_REPORT_NO)});
+test('demo detail ingredient list',async()=>{const r=await fetch(url()+'/api/detail?report_no=177203860016&mode=demo');const j=await r.json();assert.ok(j.ingredients.includes('찹쌀'))});
+test('search and detail input validation',async()=>{assert.equal((await fetch(url()+'/api/search?q=a&mode=demo')).status,400);assert.equal((await fetch(url()+'/api/detail?report_no=../../etc&mode=demo')).status,400)});
+test('live without key explains configuration',async()=>{if(!process.env.FOODSAFETY_API_KEY){const r=await fetch(url()+'/api/search?q='+encodeURIComponent('간장')+'&mode=live');assert.equal(r.status,503)}});
