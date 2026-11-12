@@ -7,6 +7,7 @@ const net=require('node:net');
 const tls=require('node:tls');
 const fs=require('node:fs');
 const path=require('node:path');
+const crypto=require('node:crypto');
 const root=__dirname;
 const PORT=Number(process.env.PORT||3000);
 const DEMO=[
@@ -87,6 +88,29 @@ async function fetchAPI(service,field,term,limit){
  if(!/^[a-zA-Z0-9_-]+$/.test(k))throw Object.assign(new Error('API 키 형식이 올바르지 않습니다.'),{status:503});
  if(!['I1250','C002'].includes(service)||!['PRDLST_NM','PRDLST_REPORT_NO'].includes(field))throw new Error('허용되지 않은 조회 조건');
  const suffix=`/api/${k}/${service}/json/1/${limit}/${field}=${encodeURIComponent(term)}`;
+ const bridge=(process.env.FOOD_FINDER_BRIDGE_URL||'').trim();
+ if(bridge){
+  let endpoint;
+  try{endpoint=new URL(bridge);}catch{throw Object.assign(new Error('FOOD_FINDER_BRIDGE_URL 설정 오류'),{status:503});}
+  if(endpoint.protocol!=='https:' || endpoint.username || endpoint.password || endpoint.pathname!=='/api/bridge')
+    throw Object.assign(new Error('중계 서버 주소는 https://.../api/bridge 형식이어야 합니다.'),{status:503});
+  const timestamp=Date.now().toString();
+  const payload={service,field,term,limit};
+  const signing=[timestamp,service,field,term,String(limit)].join('\n');
+  const signature=crypto.createHmac('sha256',k).update(signing).digest('hex');
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),35000);
+  try{
+   const response=await fetch(endpoint.href,{method:'POST',headers:{'Content-Type':'application/json','X-Food-Finder-Timestamp':timestamp,'X-Food-Finder-Signature':signature},body:JSON.stringify(payload),signal:controller.signal});
+   const data=await response.json();
+   if(!response.ok)throw Object.assign(new Error('서울 중계: '+(data.error||'HTTP '+response.status)),{status:502});
+   if(!Array.isArray(data.rows))throw Object.assign(new Error('서울 중계 응답 형식 오류'),{status:502});
+   return {rows:data.rows,total:Number(data.total||0)};
+  }catch(e){
+   if(e.status)throw e;
+   throw Object.assign(new Error('서울 중계 연결 오류: '+(e.name==='AbortError'?'요청 시간 초과':e.message)),{status:502});
+  }finally{clearTimeout(timer);}
+ }
  const failures=[];
  // Secure HTTPS first. API official documentation also offers HTTP, used only as fallback.
  for(const protocol of ['https','http']){
@@ -120,7 +144,7 @@ async function diagnose(){
  const now=Date.now();
  if(diagnosticCache&&now<diagnosticCache.expires)return diagnosticCache.promise;
  const promise=(async()=>{
-  const report={version:'0.3',api_key_configured:!!key(),tested_at:new Date().toISOString(),tests:[]};
+  const report={version:'0.4',bridge_configured:!!process.env.FOOD_FINDER_BRIDGE_URL,api_key_configured:!!key(),tested_at:new Date().toISOString(),tests:[]};
   try{
    const started=Date.now();const records=await dns.lookup(HOST,{family:4,all:true});
    report.tests.push({name:'DNS IPv4',ok:records.length>0,detail:records.map(x=>x.address).join(', '),ms:Date.now()-started});
@@ -137,16 +161,23 @@ async function diagnose(){
    }catch(e){return {name:`I1250 ${protocol.toUpperCase()}`,ok:false,detail:`${e.stage||'network'}: ${e.code||'UNKNOWN'}`,ms:e.elapsed_ms||null};}
   }));
   report.tests.push(...checks);
+  if(process.env.FOOD_FINDER_BRIDGE_URL){
+   try{
+    const started=Date.now();
+    const via=await fetchAPI('I1250','PRDLST_NM','간장',1);
+    report.tests.push({name:'서울 중계 I1250',ok:Array.isArray(via.rows),detail:'조회 성공 · '+via.rows.length+'건',ms:Date.now()-started});
+   }catch(e){report.tests.push({name:'서울 중계 I1250',ok:false,detail:e.message.replace(/\/api\/[^/]+\//g,'/api/[REDACTED]/')});}
+  }
   return report;
  })();
  diagnosticCache={expires:now+120000,promise};
  return promise;
 }
-const DIAGNOSTICS_HTML=`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FOOD FINDER 연결 진단</title><style>body{font-family:system-ui,sans-serif;background:#f6faf9;color:#18332e;margin:0;padding:24px}main{max-width:720px;margin:auto}h1{font-size:27px}.sub{color:#526b64}article{background:white;border:1px solid #dfeae5;padding:16px;border-radius:12px;margin:10px 0}.good{color:#087d56}.bad{color:#b14527}small{color:#777}button{border:0;border-radius:8px;background:#0a8068;color:white;padding:12px 16px;cursor:pointer}code{font-family:ui-monospace,monospace}pre{background:#e9f0ed;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere}.tip{padding:16px;background:#fff8e9;border:1px solid #ecdcab;border-radius:8px}</style><main><h1>FOOD FINDER 연결 진단</h1><p class="sub">Render 서버가 식품안전나라에 연결되는지 확인합니다. 인증키는 화면에 표시되지 않습니다.</p><p id="summary">확인 중…</p><div id="results"></div><p class="tip">화면의 진단 결과를 캡처해서 공유해 주세요. API 인증키를 공유할 필요는 없습니다.</p><button id="again">다시 확인</button><script>async function run(){document.getElementById('summary').textContent='확인 중…';document.getElementById('results').replaceChildren();try{const r=await fetch('/api/diagnostics');const d=await r.json();document.getElementById('summary').textContent=d.api_key_configured?'인증키 설정 확인됨 · 서버 연결 결과는 아래 참고':'인증키가 설정되어 있지 않습니다';for(const t of d.tests){const card=document.createElement('article');const h=document.createElement('strong');h.textContent=(t.ok?'✅ ':'❌ ')+t.name;h.className=t.ok?'good':'bad';const p=document.createElement('p');p.textContent=t.detail||'';const s=document.createElement('small');s.textContent=t.ms==null?'':t.ms+'ms';card.append(h,p,s);document.getElementById('results').append(card)}}catch(e){document.getElementById('summary').textContent='진단 요청 실패: '+e.message}}document.getElementById('again').onclick=run;run()</script></main></html>`;
+const DIAGNOSTICS_HTML=`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FOOD FINDER 연결 진단</title><style>body{font-family:system-ui,sans-serif;background:#f6faf9;color:#18332e;margin:0;padding:24px}main{max-width:720px;margin:auto}h1{font-size:27px}.sub{color:#526b64}article{background:white;border:1px solid #dfeae5;padding:16px;border-radius:12px;margin:10px 0}.good{color:#087d56}.bad{color:#b14527}small{color:#777}button{border:0;border-radius:8px;background:#0a8068;color:white;padding:12px 16px;cursor:pointer}code{font-family:ui-monospace,monospace}pre{background:#e9f0ed;padding:12px;white-space:pre-wrap;overflow-wrap:anywhere}.tip{padding:16px;background:#fff8e9;border:1px solid #ecdcab;border-radius:8px}</style><main><h1>FOOD FINDER 연결 진단</h1><p class="sub">Render 서버가 식품안전나라에 연결되는지 확인합니다. 서울 중계 설정 여부도 확인하세요. 인증키는 화면에 표시되지 않습니다.</p><p id="summary">확인 중…</p><div id="results"></div><p class="tip">화면의 진단 결과를 캡처해서 공유해 주세요. API 인증키를 공유할 필요는 없습니다.</p><button id="again">다시 확인</button><script>async function run(){document.getElementById('summary').textContent='확인 중…';document.getElementById('results').replaceChildren();try{const r=await fetch('/api/diagnostics');const d=await r.json();document.getElementById('summary').textContent=d.api_key_configured?'인증키 설정 확인됨 · 서버 연결 결과는 아래 참고':'인증키가 설정되어 있지 않습니다';for(const t of d.tests){const card=document.createElement('article');const h=document.createElement('strong');h.textContent=(t.ok?'✅ ':'❌ ')+t.name;h.className=t.ok?'good':'bad';const p=document.createElement('p');p.textContent=t.detail||'';const s=document.createElement('small');s.textContent=t.ms==null?'':t.ms+'ms';card.append(h,p,s);document.getElementById('results').append(card)}}catch(e){document.getElementById('summary').textContent='진단 요청 실패: '+e.message}}document.getElementById('again').onclick=run;run()</script></main></html>`;
 async function route(req,res){
  const u=new URL(req.url,'http://localhost');
  if(req.method!=='GET')return send(res,405,{error:'허용되지 않는 요청입니다.'});
- if(u.pathname==='/health')return send(res,200,{status:'ok',api_configured:!!key(),version:'0.3'});
+ if(u.pathname==='/health')return send(res,200,{status:'ok',api_configured:!!key(),version:'0.4',bridge_configured:!!process.env.FOOD_FINDER_BRIDGE_URL});
  if(u.pathname==='/api/diagnostics')return send(res,200,await diagnose());
  if(u.pathname==='/diagnostics'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});return res.end(DIAGNOSTICS_HTML);}
  if(u.pathname==='/api/search'){

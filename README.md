@@ -1,37 +1,28 @@
-# FOOD FINDER WEB · MVP 0.1
+# FOOD FINDER 서버 수정 v0.3
 
-**실제로 실행 가능한 웹앱**입니다. 브라우저 화면, 제품 검색, 상세 조회, 외부 이미지/쇼핑 검색 링크가 있습니다. Node.js 20+ 기본 기능만 사용해 별도 npm 패키지 설치가 필요 없습니다.
+현재 GitHub의 `server.js`를 새 파일로 교체하면 되는 최소 수정본입니다.
+다른 파일은 교체할 필요 없습니다.
 
-## 완료된 기능
-- 체험 모드: 공식 식품안전나라 API 문서의 **샘플을 참고한 예시** 제품 4개 검색 및 상세 조회. 별도 API 키 없이 실행됩니다.
-- 실시간 모드: 서버의 API 키를 설정하면 식품안전나라 `I1250` 품목제조보고 API에서 제품명 검색/보고번호 상세 조회, `C002`에서 원재료 조회를 시도합니다. **유효한 키로의 통합테스트는 아직 진행되지 않았습니다.**
-- 검색 결과에서 제조사 및 품목제조보고번호로 제품 구별.
-- 제품 상세에서 구글/네이버 제품 이미지, 표시사항, 네이버쇼핑/구글쇼핑 검색 페이지 열기.
+## 고친 내용
 
-## 아직 미구현
-- 이미지 자동 수집/매칭/검증, 쇼핑몰 판매가격 자동 비교, 대체품 추천, 로그인/권한 관리.
-- 실시간 API 연결에 대한 발급 키 기반 통합 검증.
+- 식품안전나라 API 요청을 IPv4로 고정해 IPv6 연결 문제 가능성을 제거합니다.
+- Node.js 내장 HTTP/HTTPS 클라이언트를 이용하며 HTTPS 우선, 공식 HTTP 주소를 대체 경로로 사용합니다.
+- 요청 대기시간을 프로토콜별 14초로 늘리고 타임아웃 단계를 구분합니다.
+- DNS, TCP 80, TLS 443, 실시간 I1250 기본 조회를 별도로 진단하는 `/diagnostics` 페이지를 추가했습니다.
+- 인증키를 진단 화면·응답에 출력하지 않습니다.
 
-## 인터넷 웹사이트 배포 (Render)
-1. GitHub에서 새 **비공개 저장소**를 생성해 ZIP 압축파일의 내용물을 저장소 최상위에 업로드합니다.
-2. [Render](https://render.com)에 가입하고 GitHub 저장소를 연결합니다.
-3. Render → **New → Web Service** 에서 해당 저장소를 선택합니다.
-4. Runtime `Node`, Build Command `npm install`, Start Command `npm start` 를 설정합니다. `render.yaml`도 포함되어 있습니다.
-5. 실시간 검색이 필요하면 Render의 **Environment** 화면에서 `FOODSAFETY_API_KEY`에 식품안전나라에서 발급한 인증키를 입력하세요. 키는 GitHub 소스나 브라우저에 올리지 마세요.
-6. 배포 성공 시 Render가 실제 `https://...onrender.com` 접속 주소를 발급합니다. **현재 ZIP 자체에는 실제 운영 URL이 없습니다.**
+## GitHub에 업데이트
+1. https://github.com/netdudwo-blip/food-finder/blob/main/server.js 방문
+2. 연필 모양(Edit) 클릭
+3. 현재 코드를 지우고, 이 ZIP의 `server.js` 내용을 전부 붙여넣기
+4. Commit changes 클릭
+5. Render 자동 배포가 Live가 되면 https://food-finder-xvee.onrender.com/health 에서 `version: 0.3` 확인
+6. https://food-finder-xvee.onrender.com/diagnostics 방문, 진단 결과 확인
 
-호스팅 상품의 무료 사용 가능 여부/한도는 변경될 수 있습니다.
+**중요**: 현 시점에서는 사용자의 Render 호스팅 환경에서 직접 진단을 실행하지 못했습니다.
+IPv4/대기시간 변경이 직접 해결할 수 있지만, Render에서 API 서버 접근 자체가 차단되었다면 별도 중계 서버나 다른 리전/호스팅이 필요합니다.
 
-## 개발용 로컬 테스트 (최종 웹 사용자는 설치 불필요)
+**안전**: `/diagnostics`에 API 인증키가 노출되지는 않지만, 공개 진단 페이지이므로 문제 해결 후에는 진단 기능을 비활성화하는 업데이트가 권장됩니다. GitHub에 인증키를 붙여넣지 마세요.
 
-```sh
-node server.js
-```
-
-브라우저에서 `http://localhost:3000`. 자동 테스트는 `node --test test-server.js`.
-
-## 데이터 문서
-- [I1250 품목제조보고](https://www.foodsafetykorea.go.kr/api/openApiInfo.do?svc_no=I1250)
-- [C002 원재료](https://www.foodsafetykorea.go.kr/api/openApiInfo.do?svc_no=C002)
-
-샘플 데이터는 공식 API 샘플에서 제품/제조사/제조보고번호를 참고했으나 실제 공공 API 실시간 응답을 뜻하지 않습니다. 원재료/이미지 검색 결과는 동일한 판매 제품으로 검증되지 않았습니다.
+## 로컬 테스트
+Node.js 20 이상에서 `npm test`. 기본 기능 테스트 7개와 모의 네트워크 테스트 4개를 포함합니다. 실시간 식품안전나라 및 Render 서버를 직접 연동한 테스트는 아닙니다.

@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "version": 2,
+  "framework": null,
+  "regions": ["icn1"],
+  "functions": {"api/bridge.js": {"maxDuration": 40}, "api/ping.js": {"maxDuration": 15}}
+}
