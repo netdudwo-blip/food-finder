@@ -86,7 +86,8 @@ function interpretApiData(data,service){
  if(code!=='INFO-000')throw Object.assign(new Error(`식품안전나라 API 응답: ${code} / ${result.MSG||'확인 필요'}`),{status:502});
  return {rows:Array.isArray(section.row)?section.row:[],total:Number(section.total_count||0)};
 }
-async function fetchAPI(service,field,term,limit,start=1){
+const fetchAPI=require('./lib/food-queue')(fetchOnce);
+async function fetchOnce(service,field,term,limit,start=1){
  const k=key();if(!k)throw Object.assign(new Error('서버에 FOODSAFETY_API_KEY가 설정되지 않았습니다.'),{status:503});
  if(!/^[a-zA-Z0-9_-]+$/.test(k))throw Object.assign(new Error('API 키 형식이 올바르지 않습니다.'),{status:503});
  if(!['I1250','C002'].includes(service)||!(service==='I1250'?search.FIELDS:['PRDLST_REPORT_NO']).includes(field))throw new Error('허용되지 않은 조회 조건');

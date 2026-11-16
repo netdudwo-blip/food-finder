@@ -3,6 +3,18 @@ const {test}=require('node:test'),assert=require('node:assert/strict');
 const {FIELDS,options,collect,select}=require('./lib/search');
 const {matchNutrition,createEnricher}=require('./lib/nutrition');
 const ui=require('./static/search-ui');
+test('busy food key retries in order; other errors release the queue without retry',async()=>{
+ const calls=[];let locked=true;
+ const fetch=require('./lib/food-queue')(async q=>{
+  calls.push(q);
+  if(q==='행복모아'&&locked){locked=false;throw new Error('서울 중계: INFO-500');}
+  if(q==='invalid')throw new Error('INFO-110');
+  return q;
+ },async()=>{});
+ const results=await Promise.allSettled(['행복모아','invalid','next'].map(q=>fetch(q)));
+ assert.deepEqual(calls,['행복모아','행복모아','invalid','next']);
+ assert.deepEqual(results.map(r=>r.status),['fulfilled','rejected','fulfilled']);
+});
 const rows=Array.from({length:123},(_,i)=>({PRDLST_NM:'제품 '+i,PRDLST_REPORT_NO:String(100000+i),LCNS_NO:'12345',BSSH_NM:i%2?'가 제조사':'나 제조사',PRDLST_DCNM:i%3?'소스':'간장',PRMS_DT:String(20200101+i)}));
 const opts=extra=>options(new URLSearchParams({q:'제품',...extra}));
 test('123 results paginate without missing or repeated identities at sizes 10/30/50',()=>{
