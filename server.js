@@ -200,9 +200,18 @@ async function route(req,res){
    }
    rows=await cached.promise;
   }
+  if(u.searchParams.get('view')==='list'){
+   const fields=[...search.FIELDS,'PRMS_DT'];
+   return send(res,200,{mode,rows:rows.map(p=>Object.fromEntries(fields.map(k=>[k,p[k]])))});
+  }
   const result=search.select(rows,o);
   result.rows=mode==='live'?await enrich(result.rows):result.rows.map(p=>({...p,nutrition:require('./lib/nutrition').missing('demo')}));
   return send(res,200,{...result,mode,notice:mode==='live'?'식품안전나라 공식 API · 검색 결과 5분 캐시 · 영양정보는 품목번호가 일치하는 단일 자료만 표시':'체험 데이터 (실시간 조회 아님)'});
+ }
+ if(u.pathname==='/api/nutrition'){
+  const ids=[...new Set(u.searchParams.getAll('no'))];
+  if(!ids.length||ids.length>50||!ids.every(validReport))return send(res,400,{error:'품목번호를 확인하세요.'});
+  return send(res,200,{rows:await enrich(ids.map(no=>({PRDLST_REPORT_NO:no})))});
  }
  if(u.pathname==='/api/detail'){
   const no=(u.searchParams.get('report_no')||'').trim(),mode=u.searchParams.get('mode')||'live';
@@ -224,7 +233,7 @@ async function route(req,res){
   }catch{ingredients_status='api_error'}
   return send(res,200,{product,ingredients,mode,ingredients_status});
  }
- const assets={'/static/sections.js':'static/sections.js','/':'index.html','/static/app.js':'static/app.js','/static/search-ui.js':'static/search-ui.js','/static/style.css':'static/style.css'};
+ const assets={'/static/result-page.js':'static/result-page.js','/static/sections.js':'static/sections.js','/':'index.html','/static/app.js':'static/app.js','/static/search-ui.js':'static/search-ui.js','/static/style.css':'static/style.css'};
  if(!assets[u.pathname])return send(res,404,{error:'페이지를 찾을 수 없습니다.'});
  const file=path.join(root,assets[u.pathname]);
  let body=fs.readFileSync(file);

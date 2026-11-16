@@ -26,7 +26,7 @@ test('upstream collection passes ranges beyond row 50 and 1000',async()=>{
  assert.equal(result.length,1103);assert.deepEqual(calls,[[1000,1],[1000,1001]]);
 });
 test('all five official search fields are queried and identity overlap is deduplicated',async()=>{
- const fields=[];const result=await collect(async(s,f)=>{fields.push(f);return {rows:[rows[0]],total:1}},'제품','all');assert.deepEqual(fields,FIELDS);assert.equal(result.length,1);
+ const fields=[];const result=await collect(async(s,f)=>{fields.push(f);return {rows:[rows[0]],total:1}},'1234','all');assert.deepEqual(fields,FIELDS);assert.equal(result.length,1);
 });
 test('overly broad or incomplete upstream results are explicit errors',async()=>{
  await assert.rejects(collect(async()=>({total:5001,rows:[]}), '소스','PRDLST_NM'),e=>e.status===422);
@@ -53,4 +53,10 @@ test('nutrition enrichment uses server key, exact report filter and cache',async
 test('history keeps newest 10 unique entries and handles invalid storage',()=>{let history=[];for(let i=0;i<12;i++)history=ui.remember(history,'검색 '+i);assert.equal(history.length,10);history=ui.remember(history,'검색 5');assert.equal(history[0],'검색 5');assert.equal(history.length,10);assert.deepEqual(ui.clean(null),[]);assert.deepEqual(ui.clean([null,1,'a','간장','간장']),['간장'])});
 test('bridge signature binds pagination start and quota errors never become empty success',()=>{
  const {canonical,normalize}=require('./api/bridge').testOnly;assert.notEqual(canonical('1','I1250','BSSH_NM','매일',50,1),canonical('1','I1250','BSSH_NM','매일',50,51));assert.throws(()=>normalize({I1250:{RESULT:{CODE:'INFO-300'}}},'I1250'),/INFO-300/);assert.throws(()=>require('./server').interpretApiData({I1250:{RESULT:{CODE:'INFO-300'}}},'I1250'),/INFO-300/);
+});
+
+test('Korean text skips both identifier-only fields',async()=>{
+ const fields=[];
+ await collect(async(s,f)=>{fields.push(f);return {rows:[],total:0}},'대상','all');
+ assert.deepEqual(fields,['PRDLST_NM','PRDLST_DCNM','BSSH_NM']);
 });
