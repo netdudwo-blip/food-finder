@@ -1,0 +1,156 @@
+{
+  "1101110327125": {
+    "sales": {
+      "amount": "3528856015820",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260327000936",
+      "label": "금감원 DART 사업보고서"
+    },
+    "size": "중견기업",
+    "employees": "5,106",
+    "groups": "대상"
+  },
+  "1101110057574": {
+    "sales": {
+      "amount": "2734714249425",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260311003892",
+      "label": "금감원 DART 사업보고서"
+    },
+    "size": "중견기업",
+    "employees": "5,501",
+    "groups": "농심"
+  },
+  "1341110002258": {
+    "sales": {
+      "amount": "2988655024536",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260318000621",
+      "label": "금감원 DART 사업보고서"
+    },
+    "size": "중견기업",
+    "employees": "3,388",
+    "groups": "오뚜기"
+  },
+  "1101110034308": {
+    "sales": {
+      "amount": "1901833914086",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260318001082",
+      "label": "금감원 DART 사업보고서"
+    },
+    "size": "중견기업",
+    "employees": "3,025",
+    "groups": "삼양식품"
+  },
+  "1101116390770": {
+    "sales": {
+      "amount": "1758440909198",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260319001065",
+      "label": "금감원 DART 사업보고서"
+    },
+    "size": "중견기업",
+    "employees": "1,921",
+    "groups": "매일홀딩스 (주)"
+  },
+  "1101110375439": {
+    "sales": {
+      "amount": "111449644728",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260323001547",
+      "label": "금감원 DART 사업보고서"
+    },
+    "size": "중견기업",
+    "employees": "546",
+    "groups": "풀무원"
+  },
+  "1101116417805": {
+    "sales": {
+      "amount": "1145838309534",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260318001320",
+      "label": "금감원 DART 사업보고서"
+    },
+    "size": "중견기업",
+    "employees": "1,623",
+    "groups": "(주)오리온"
+  },
+  "1101112101816": {
+    "sales": {
+      "amount": "2179222239481",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260319000629",
+      "label": "금감원 DART 사업보고서"
+    },
+    "size": "중견기업",
+    "employees": "3,260",
+    "groups": "동원"
+  },
+  "1152110000287": {
+    "sales": {
+      "amount": "1312434176823",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260318001526",
+      "label": "금감원 DART 사업보고서"
+    },
+    "size": "중견기업",
+    "employees": "1,998",
+    "groups": "주식회사 빙그레"
+  },
+  "1101110028591": {
+    "sales": {
+      "amount": "2240431695323",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260318000752",
+      "label": "금감원 DART 사업보고서"
+    },
+    "size": "중견기업",
+    "employees": "2,935",
+    "groups": "하이트진로"
+  },
+  "1101116536481": {
+    "sales": {
+      "amount": "3282856614951",
+      "unit": "원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260312000907",
+      "label": "금감원 DART 사업보고서"
+    },
+    "employees": "5,825",
+    "groups": "롯데"
+  },
+  "1101113748253": {
+    "sales": {
+      "amount": "7281140720",
+      "unit": "천원",
+      "period": "2025-12-31",
+      "basis": "별도·개별",
+      "source": "https://dart.fss.or.kr/dsaf001/main.do?rcpNo=20260316001116",
+      "label": "금감원 DART 사업보고서"
+    },
+    "employees": "8,232",
+    "groups": "씨제이"
+  }
+}

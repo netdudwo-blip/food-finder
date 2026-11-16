@@ -184,6 +184,22 @@ async function route(req,res){
  if(u.pathname==='/health')return send(res,200,{status:'ok',api_configured:!!key(),version:'0.6',bridge_configured:!!process.env.FOOD_FINDER_BRIDGE_URL});
  if(u.pathname==='/api/diagnostics')return send(res,200,await diagnose());
  if(u.pathname==='/diagnostics'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});return res.end(DIAGNOSTICS_HTML);}
+ if(u.pathname==='/api/companies'){
+  const companies=require('./lib/company');
+  return send(res,200,await companies.search(u.searchParams.get('q'),Number(u.searchParams.get('page')||1)));
+ }
+ if(['/api/company','/api/company/figures'].includes(u.pathname)){
+  const companies=require('./lib/company'),id=u.searchParams.get('id');
+  if(!/^\d{13}$/.test(id))return send(res,400,{error:'법인등록번호를 확인하세요.'});
+  const p=await companies.profile(id);
+  if(!p)return send(res,404,{error:'해당 법인을 찾지 못했습니다.'});
+  if(u.pathname==='/api/company')return send(res,200,p);
+  const [sales,status,certificates]=await Promise.all([
+   require('./lib/company-revenue').cachedRevenue(p),companies.businessStatus(p.biz).catch(()=>null),companies.certificates(p).catch(()=>[])
+  ]);
+  const facts=p.filing?.sales.source===sales?.source?p.filing:await require('./lib/company-report').cachedFacts(sales);
+  return send(res,200,{sales,status,certificates,facts});
+ }
  if(u.pathname==='/api/search'){
   const o=search.options(u.searchParams),mode=u.searchParams.get('mode')||'live';
   if(!['demo','live'].includes(mode))return send(res,400,{error:'검색 모드가 올바르지 않습니다.'});
@@ -233,7 +249,7 @@ async function route(req,res){
   }catch{ingredients_status='api_error'}
   return send(res,200,{product,ingredients,mode,ingredients_status});
  }
- const assets={'/static/result-page.js':'static/result-page.js','/static/sections.js':'static/sections.js','/':'index.html','/static/app.js':'static/app.js','/static/search-ui.js':'static/search-ui.js','/static/style.css':'static/style.css'};
+ const assets={'/static/company.js':'static/company.js','/static/result-page.js':'static/result-page.js','/static/sections.js':'static/sections.js','/':'index.html','/static/app.js':'static/app.js','/static/search-ui.js':'static/search-ui.js','/static/style.css':'static/style.css'};
  if(!assets[u.pathname])return send(res,404,{error:'페이지를 찾을 수 없습니다.'});
  const file=path.join(root,assets[u.pathname]);
  let body=fs.readFileSync(file);
