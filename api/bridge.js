@@ -40,6 +40,12 @@ async function handler(req,res){
  if(!KEY())return reply(res,503,{error:'Vercel 환경변수 FOODSAFETY_API_KEY 미설정'});
  let b;try{b=await requestBody(req);}catch{return reply(res,400,{error:'JSON 본문 오류'});}
  const {service,field,term,limit,start=1}=b||{};
+ if(service==='nutrition'){
+  if(field!=='ITEM_REPORT_NO'||typeof term!=='string'||!/^\d{4,40}$/.test(term)||limit!==1||start!==1)return reply(res,400,{error:'조회 조건 오류'});
+  if(!signed(req.headers['x-food-finder-timestamp'],req.headers['x-food-finder-signature'],service,field,term,limit,start))return reply(res,401,{error:'중계 인증 실패'});
+  const [row]=await require('../lib/nutrition').createEnricher(fetch,false)([{PRDLST_REPORT_NO:term}]);
+  return reply(res,200,{nutrition:row.nutrition});
+ }
  if(!['I1250','C002'].includes(service)||!(service==='I1250'?require('../lib/search').FIELDS:['PRDLST_REPORT_NO']).includes(field)||typeof term!=='string'||term.trim()!==term||term.length<2||term.length>80||!Number.isInteger(limit)||limit<1||limit>1000||!Number.isSafeInteger(start)||start<1||!Number.isSafeInteger(start+limit-1))return reply(res,400,{error:'조회 조건 오류'});
  if(!signed(req.headers['x-food-finder-timestamp'],req.headers['x-food-finder-signature'],service,field,term,limit,start))return reply(res,401,{error:'중계 인증 실패: 양쪽 서버 API 키 동일 여부 확인'});
  const target=`/api/${KEY()}/${service}/json/${start}/${start+limit-1}/${field}=${encodeURIComponent(term)}`;
