@@ -1,8 +1,8 @@
 {
   "name": "food-finder-web",
-  "version": "0.3.0",
+  "version": "0.6.0",
   "private": true,
   "description": "식품안전나라 기반 식품 검색 웹앱",
-  "scripts": {"start": "node server.js", "test": "node --test test-server.js test-network.js"},
+  "scripts": {"start": "node server.js", "test": "node --test test-server.js test-network.js test-bridge.js test-search.js test-integration.js"},
   "engines": {"node": ">=20"}
 }

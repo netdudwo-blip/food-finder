@@ -1,0 +1,32 @@
+{
+  "verified_at": "2026-11-14",
+  "source": "https://www.data.go.kr/data/15127578/openapi.do",
+  "endpoint": "https://apis.data.go.kr/1471000/FoodNtrCpntDbInfo03/getFoodNtrCpntDbInq03",
+  "fields": {
+    "ITEM_REPORT_NO": {
+      "type": "string",
+      "description": "품목제조보고번호",
+      "properties": {}
+    },
+    "FOOD_CAT1_NM": {
+      "type": "string",
+      "description": "식품대분류명",
+      "properties": {}
+    },
+    "AMT_NUM1": {
+      "type": "string",
+      "description": "에너지(kcal)",
+      "properties": {}
+    },
+    "SERVING_SIZE": {
+      "type": "string",
+      "description": "영양성분함량기준량",
+      "properties": {}
+    },
+    "FOOD_CD": {
+      "type": "string",
+      "description": "식품코드",
+      "properties": {}
+    }
+  }
+}

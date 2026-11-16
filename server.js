@@ -8,6 +8,9 @@ const tls=require('node:tls');
 const fs=require('node:fs');
 const path=require('node:path');
 const crypto=require('node:crypto');
+const search=require('./lib/search');
+const enrich=require('./lib/nutrition').createEnricher();
+const snapshots=new Map();
 const root=__dirname;
 const PORT=Number(process.env.PORT||3000);
 const DEMO=[
@@ -79,15 +82,15 @@ function remoteRequest({protocol,relativePath,timeoutMs=12000,host=HOST,port}){
 function interpretApiData(data,service){
  const section=data?.[service]||{},result=section.RESULT||data.RESULT||{};
  const code=result.CODE||((section.row||[]).length?'INFO-000':'UNKNOWN');
- if(['INFO-200','INFO-300'].includes(code))return {rows:[],total:0};
+ if(code==='INFO-200')return {rows:[],total:0};
  if(code!=='INFO-000')throw Object.assign(new Error(`식품안전나라 API 응답: ${code} / ${result.MSG||'확인 필요'}`),{status:502});
  return {rows:Array.isArray(section.row)?section.row:[],total:Number(section.total_count||0)};
 }
-async function fetchAPI(service,field,term,limit){
+async function fetchAPI(service,field,term,limit,start=1){
  const k=key();if(!k)throw Object.assign(new Error('서버에 FOODSAFETY_API_KEY가 설정되지 않았습니다.'),{status:503});
  if(!/^[a-zA-Z0-9_-]+$/.test(k))throw Object.assign(new Error('API 키 형식이 올바르지 않습니다.'),{status:503});
- if(!['I1250','C002'].includes(service)||!['PRDLST_NM','PRDLST_REPORT_NO'].includes(field))throw new Error('허용되지 않은 조회 조건');
- const suffix=`/api/${k}/${service}/json/1/${limit}/${field}=${encodeURIComponent(term)}`;
+ if(!['I1250','C002'].includes(service)||!(service==='I1250'?search.FIELDS:['PRDLST_REPORT_NO']).includes(field))throw new Error('허용되지 않은 조회 조건');
+ const suffix=`/api/${k}/${service}/json/${start}/${start+limit-1}/${field}=${encodeURIComponent(term)}`;
  const bridge=(process.env.FOOD_FINDER_BRIDGE_URL||'').trim();
  if(bridge){
   let endpoint;
@@ -95,8 +98,8 @@ async function fetchAPI(service,field,term,limit){
   if(endpoint.protocol!=='https:' || endpoint.username || endpoint.password || endpoint.pathname!=='/api/bridge')
     throw Object.assign(new Error('중계 서버 주소는 https://.../api/bridge 형식이어야 합니다.'),{status:503});
   const timestamp=Date.now().toString();
-  const payload={service,field,term,limit};
-  const signing=[timestamp,service,field,term,String(limit)].join('\n');
+  const payload={service,field,term,limit,start};
+  const signing=[timestamp,service,field,term,String(limit),String(start)].join('\n');
   const signature=crypto.createHmac('sha256',k).update(signing).digest('hex');
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),35000);
@@ -144,7 +147,7 @@ async function diagnose(){
  const now=Date.now();
  if(diagnosticCache&&now<diagnosticCache.expires)return diagnosticCache.promise;
  const promise=(async()=>{
-  const report={version:'0.4',bridge_configured:!!process.env.FOOD_FINDER_BRIDGE_URL,api_key_configured:!!key(),tested_at:new Date().toISOString(),tests:[]};
+  const report={version:'0.6',bridge_configured:!!process.env.FOOD_FINDER_BRIDGE_URL,api_key_configured:!!key(),tested_at:new Date().toISOString(),tests:[]};
   try{
    const started=Date.now();const records=await dns.lookup(HOST,{family:4,all:true});
    report.tests.push({name:'DNS IPv4',ok:records.length>0,detail:records.map(x=>x.address).join(', '),ms:Date.now()-started});
@@ -177,19 +180,28 @@ const DIAGNOSTICS_HTML=`<!doctype html><html lang="ko"><meta charset="utf-8"><me
 async function route(req,res){
  const u=new URL(req.url,'http://localhost');
  if(req.method!=='GET')return send(res,405,{error:'허용되지 않는 요청입니다.'});
- if(u.pathname==='/health')return send(res,200,{status:'ok',api_configured:!!key(),version:'0.4',bridge_configured:!!process.env.FOOD_FINDER_BRIDGE_URL});
+ if(u.pathname==='/health')return send(res,200,{status:'ok',api_configured:!!key(),version:'0.6',bridge_configured:!!process.env.FOOD_FINDER_BRIDGE_URL});
  if(u.pathname==='/api/diagnostics')return send(res,200,await diagnose());
  if(u.pathname==='/diagnostics'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});return res.end(DIAGNOSTICS_HTML);}
  if(u.pathname==='/api/search'){
-  const q=(u.searchParams.get('q')||'').trim(), mode=u.searchParams.get('mode')||'live';
-  if(q.length<2||q.length>80)return send(res,400,{error:'검색어는 2~80자로 입력해 주세요.'});
+  const o=search.options(u.searchParams),mode=u.searchParams.get('mode')||'live';
   if(!['demo','live'].includes(mode))return send(res,400,{error:'검색 모드가 올바르지 않습니다.'});
-  if(mode==='demo'){
-   const rows=DEMO.filter(x=>(x.PRDLST_NM+' '+x.BSSH_NM).toLowerCase().includes(q.toLowerCase()));
-   return send(res,200,{rows,total:rows.length,mode,notice:'공식 문서 샘플을 바탕으로 구성한 예시 데이터이며 실시간 조회 결과가 아닙니다.'});
+  let rows;
+  if(mode==='demo')rows=DEMO.filter(p=>(o.field==='all'?search.FIELDS:[o.field]).some(f=>String(p[f]||'').toLowerCase().includes(o.q.toLowerCase())));
+  else{
+   if(!key())return send(res,503,{error:'서버에 FOODSAFETY_API_KEY가 설정되지 않았습니다.'});
+   const id=JSON.stringify([o.q,o.field]);let cached=snapshots.get(id);
+   if(!cached||cached.expires<Date.now()){
+    if(snapshots.size>=20)snapshots.delete(snapshots.keys().next().value);
+    cached={expires:Date.now()+300000,promise:search.collect(fetchAPI,o.q,o.field)};
+    snapshots.set(id,cached);
+    cached.promise.catch(()=>{if(snapshots.get(id)===cached)snapshots.delete(id)});
+   }
+   rows=await cached.promise;
   }
-  const result=await fetchAPI('I1250','PRDLST_NM',q,50);
-  return send(res,200,{...result,mode,notice:'식품안전나라 품목제조보고 API 결과'});
+  const result=search.select(rows,o);
+  result.rows=mode==='live'?await enrich(result.rows):result.rows.map(p=>({...p,nutrition:require('./lib/nutrition').missing('demo')}));
+  return send(res,200,{...result,mode,notice:mode==='live'?'식품안전나라 공식 API · 검색 결과 5분 캐시 · 영양정보는 품목번호가 일치하는 단일 자료만 표시':'체험 데이터 (실시간 조회 아님)'});
  }
  if(u.pathname==='/api/detail'){
   const no=(u.searchParams.get('report_no')||'').trim(),mode=u.searchParams.get('mode')||'live';
@@ -211,13 +223,13 @@ async function route(req,res){
   }catch{ingredients_status='api_error'}
   return send(res,200,{product,ingredients,mode,ingredients_status});
  }
- const assets={'/':'index.html','/static/app.js':'static/app.js','/static/style.css':'static/style.css'};
+ const assets={'/':'index.html','/static/app.js':'static/app.js','/static/search-ui.js':'static/search-ui.js','/static/style.css':'static/style.css'};
  if(!assets[u.pathname])return send(res,404,{error:'페이지를 찾을 수 없습니다.'});
  const file=path.join(root,assets[u.pathname]);
  let body=fs.readFileSync(file);
  if(u.pathname==='/'){
   const enabled=!!key();
-  body=Buffer.from(body.toString().replace('__API_STATUS__',enabled?'실시간 API 설정됨':'체험 모드 이용 가능').replace('__LIVE_DISABLED__',enabled?'':'disabled').replace('__HINT__',enabled?'실시간 조회는 상단에서 선택하세요. 체험 데이터는 공식 문서 예시를 바탕으로 재구성했습니다.':'실시간 API 연결에는 서버 환경변수 FOODSAFETY_API_KEY가 필요합니다. 체험 데이터는 바로 사용 가능합니다.'));
+  body=Buffer.from(body.toString().replace('__API_STATUS__',enabled?'실시간 API 설정됨':'실시간 API 설정 필요').replace('__HINT__',enabled?'공식 API 조회 결과를 제공합니다. 영양정보 미연결 또는 미확인 항목은 미제공으로 표시합니다.':'실시간 조회를 위해 서버 API 설정이 필요합니다.'));
  }
  res.writeHead(200,{'Content-Type':u.pathname.endsWith('.js')?'text/javascript; charset=utf-8':u.pathname.endsWith('.css')?'text/css; charset=utf-8':'text/html; charset=utf-8','X-Content-Type-Options':'nosniff'});res.end(body);
 }

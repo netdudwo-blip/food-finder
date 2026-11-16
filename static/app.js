@@ -1,16 +1,65 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const safe=v=>String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-const val=(o,...keys)=>keys.map(k=>o?.[k]).find(x=>x!==undefined&&x!==null&&x!=='')||'—';
+const val=(o,...keys)=>keys.map(k=>o?.[k]).find(x=>x!==undefined&&x!==null&&x!=='')??'미제공';
 const qlink=(domain,query)=>domain+encodeURIComponent(query);
-let products=[],currentMode='demo';
+let products=[],currentMode='live',activeQuery='',page=1,requestId=0,controller;
 function alertNotice(msg){$('notice').textContent=msg;$('notice').classList.remove('hidden')}
 function clearNotice(){$('notice').classList.add('hidden')}
-async function doSearch(query){const q=query.trim();if(q.length<2){alertNotice('검색어는 두 글자 이상 입력하세요.');return}currentMode=$('mode').value;const btn=$('searchBtn');btn.disabled=true;btn.textContent='검색 중…';$('resultlist').innerHTML='<div class="loading">제품 정보를 조회하고 있습니다…</div>';clearNotice();$('count').textContent='…';try{const r=await fetch('/api/search?'+new URLSearchParams({q,mode:currentMode}));const data=await r.json();if(!r.ok)throw new Error(data.error||'검색 실패');products=data.rows;$('count').textContent=(Number(data.total)||0).toLocaleString()+'건';$('resultmode').textContent=currentMode==='demo'?'체험 데이터':'식품안전나라 실시간';if(data.notice&&currentMode==='demo')alertNotice(data.notice);const tip=$('results-tip');if(tip)tip.textContent=currentMode==='live'?'총 '+Number(data.total||0).toLocaleString()+'건 중 최대 '+products.length+'건을 표시합니다. 제품명·제조사·품목보고번호를 확인하고 클릭하세요.':'예시 데이터 '+products.length+'건을 표시합니다. 실시간 데이터가 아닙니다.';$('resultlist').innerHTML=products.length?products.map((p,i)=>`<button class="item" data-index="${i}"><span class="itempic">▧</span><span class="itemmain"><span class="itemname">${safe(val(p,'PRDLST_NM'))}</span><span class="itemmeta"><span>제조사 <b>${safe(val(p,'BSSH_NM'))}</b></span><span>품목보고번호 <b>${safe(val(p,'PRDLST_REPORT_NO'))}</b></span><span>유형 <b>${safe(val(p,'PRDLST_DCNM'))}</b></span></span></span><span class="arrow">›</span></button>`).join(''):'<div class="empty"><strong>검색 결과가 없습니다.</strong><p>다른 제품명이나 일부 단어로 다시 검색해 주세요.</p></div>'}catch(e){$('count').textContent='—';$('resultlist').innerHTML='<div class="empty"><strong>검색 결과를 표시할 수 없습니다.</strong><p>오류 안내를 확인해 주세요.</p></div>';alertNotice(e.message)}finally{btn.disabled=false;btn.textContent='검색하기 ↗'}}
-function field(label,value){return `<div class="field"><dt>${safe(label)}</dt><dd>${safe(value||'—')}</dd></div>`}
-async function openDetail(index){const p=products[index];if(!p)return;const no=p.PRDLST_REPORT_NO;$('modal').classList.remove('hidden');document.body.style.overflow='hidden';$('detailBody').innerHTML='<div class="loading">제품 상세정보를 불러오는 중…</div>';try{const r=await fetch('/api/detail?'+new URLSearchParams({report_no:no,mode:currentMode}));const data=await r.json();if(!r.ok)throw new Error(data.error||'상세 조회 실패');const item=data.product;const name=val(item,'PRDLST_NM'),company=val(item,'BSSH_NM');const query=name+' '+company;const imgG=qlink('https://www.google.com/search?tbm=isch&q=',query+' 제품 포장');const imgN=qlink('https://search.naver.com/search.naver?where=image&query=',query+' 제품');const back=qlink('https://www.google.com/search?tbm=isch&q=',query+' 표시사항 뒷면');const priceN=qlink('https://search.shopping.naver.com/search/all?query=',query);const priceG=qlink('https://www.google.com/search?tbm=shop&q=',query);$('detailBody').innerHTML=`<h2 class="detailtitle" id="detailTitle">${safe(name)}</h2><p class="company">${safe(company)} ${data.mode==='demo'?'· 체험용 예시 데이터':'· 식품안전나라 공식 조회'}</p><div class="detailsub">공식 품목제조보고 정보</div><div class="fields">${field('품목제조보고번호',item.PRDLST_REPORT_NO)}${field('인허가번호',item.LCNS_NO)}${field('식품유형',val(item,'PRDLST_DCNM','PRDLST_CDNM'))}${field('보고일자',item.PRMS_DT)}${field('소비기한',val(item,'POG_DAYCNT','VLD_PRD_YMD'))}${field('제품형태',item.DISPOS)}${field('포장재질',item.FRMLC_MTRQLT)}${field('생산종료 여부',item.PRODUCTION)}${field('업종',item.INDUTY_CD_NM)}${field('내수/겸용구분',val(item,'NTR_CON','DOMESTIC'))}</div><div class="detailsub">원재료 정보</div><div class="ingredients">${data.ingredients.length?data.ingredients.map(v=>`<span>${safe(v)}</span>`).join(''):'<p class="muted">표시할 원재료 정보가 없습니다.'+(data.ingredients_status==='api_error'?' (원재료 API 조회 오류)':'')+'</p>'}</div><div class="detailsub">앞면 · 뒷면 이미지 찾기</div><div class="linkrow"><a href="${imgG}" target="_blank" rel="noopener noreferrer">구글 앞면 이미지 ↗</a><a href="${imgN}" target="_blank" rel="noopener noreferrer">네이버 이미지 ↗</a><a href="${back}" target="_blank" rel="noopener noreferrer">뒷면 표시사항 ↗</a></div><div class="caution">검색된 이미지는 동일 제품으로 검증되지 않았습니다. 제조사·규격·품목보고번호를 직접 대조하세요. 이미지 자동 수집 및 매칭은 아직 구현되지 않았습니다.</div><div class="detailsub">온라인 판매가 찾아보기</div><div class="linkrow"><a href="${priceN}" target="_blank" rel="noopener noreferrer">네이버쇼핑 검색 ↗</a><a href="${priceG}" target="_blank" rel="noopener noreferrer">구글쇼핑 검색 ↗</a></div><p class="muted">판매가 자동 비교 및 최저가 산출은 아직 구현 전입니다. B2B 제품은 온라인 판매 정보가 없을 수 있습니다.</p>`}catch(e){$('detailBody').innerHTML=`<p class="caution">${safe(e.message)}</p>`}}
+function readHistory(){try{return SearchUI.clean(JSON.parse(localStorage.getItem('food-finder-history')||'[]'))}catch{return []}}
+function hideHistory(){$('history').classList.add('hidden');$('query').setAttribute('aria-expanded','false')}
+function showHistory(){
+ const entries=readHistory();$('history').replaceChildren();
+ if(!entries.length){hideHistory();return}
+ const title=document.createElement('div');title.textContent='최근 검색 · 이 브라우저에 저장';title.className='history-title';$('history').append(title);
+ for(const q of entries){const b=document.createElement('button');b.type='button';b.textContent=q;b.onclick=()=>{$('query').value=q;doSearch(q,1,true)};$('history').append(b)}
+ const clear=document.createElement('button');clear.type='button';clear.textContent='기록 전체 삭제';clear.onclick=()=>{try{localStorage.removeItem('food-finder-history')}catch{}hideHistory();$('query').focus()};$('history').append(clear);
+ $('history').classList.remove('hidden');$('query').setAttribute('aria-expanded','true');
+}
+function saveHistory(q){try{localStorage.setItem('food-finder-history',JSON.stringify(SearchUI.remember(readHistory(),q)))}catch{}}
+const missingReasons={demo:'체험 모드에서는 영양 API를 조회하지 않음',not_configured:'영양 API 미설정',api_error:'영양 API 조회 오류',ambiguous:'동일 품목 복수 자료',incomplete:'전체 영양자료 미확인',not_available:'일치 자료 없음'};
+function nutritionText(n){
+ if(!n||n.energy===null||n.energy===undefined)return '미제공';
+ return n.energy+' kcal / '+(n.basis||'기준량 미제공');
+}
+function facets(id,values,selected){$(id).innerHTML='<option value="">전체</option>'+values.map(v=>`<option value="${safe(v)}">${safe(v)}</option>`).join('');$(id).value=selected}
+async function doSearch(query,wantedPage=1,newSearch=false){
+ const q=query.trim();if(q.length<2||q.length>80){alertNotice('검색어는 2~80자로 입력하세요.');return}
+ if(newSearch){$('manufacturer').value='';$('foodType').value='';saveHistory(q)}
+ hideHistory();activeQuery=q;currentMode=$('mode').value;
+ controller?.abort();controller=new AbortController();const id=++requestId;
+ products=[];$('pagination').replaceChildren();
+ const btn=$('searchBtn');btn.disabled=true;btn.textContent='검색 중…';$('resultlist').innerHTML='<div class="loading">제품 정보를 조회하고 있습니다…</div>';clearNotice();$('count').textContent='…';
+ const manufacturer=$('manufacturer').value,type=$('foodType').value;
+ try{
+  const r=await fetch('/api/search?'+new URLSearchParams({q,mode:currentMode,field:$('searchField').value,page:wantedPage,size:$('pageSize').value,sort:$('sort').value,manufacturer,type}),{signal:controller.signal});
+  const data=await r.json();if(id!==requestId)return;if(!r.ok)throw new Error(data.error||'검색 실패');
+  products=data.rows;page=data.page;$('count').textContent=data.total.toLocaleString()+'건';$('resultmode').textContent=currentMode==='demo'?'체험 데이터':'식품안전나라 실시간';
+  facets('manufacturer',data.facets.manufacturers,manufacturer);facets('foodType',data.facets.types,type);
+  $('results-tip').textContent=(data.notice||'')+' · '+page+' / '+data.pages+'페이지 · '+products.length+'건 표시';
+  $('resultlist').innerHTML=products.length?products.map((p,i)=>`<button class="item" data-index="${i}"><span class="itempic">▧</span><span class="itemmain"><span class="itemname">${safe(p.PRDLST_NM||'미제공')}</span><span class="itemmeta">${[['제조사',p.BSSH_NM],['품목보고번호',p.PRDLST_REPORT_NO],['인허가번호',p.LCNS_NO],['식품유형',p.PRDLST_DCNM],['보고일자',p.PRMS_DT],['식품대분류명',p.nutrition?.category],['에너지',nutritionText(p.nutrition)]].map(([k,v])=>`<span>${k} <b>${safe(v===undefined||v===null||v===''?'미제공':v)}</b></span>`).join('')}</span><span class="nutrition-note">영양정보 출처: 식약처 식품영양성분DB${p.nutrition?.status!=='matched'?' · 미제공: '+safe(missingReasons[p.nutrition?.status]||'자료 없음'):''}</span></span><span class="arrow">›</span></button>`).join(''):'<div class="empty"><strong>검색 결과가 없습니다.</strong><p>검색어 또는 필터를 변경해 주세요.</p></div>';
+  const nav=$('pagination');
+  function button(label,target,disabled=false){const b=document.createElement('button');b.textContent=label;b.disabled=disabled;b.onclick=()=>doSearch(activeQuery,target);nav.append(b)}
+  button('이전',page-1,page<=1);
+  for(let n=Math.max(1,page-2);n<=Math.min(data.pages,page+2);n++){button(String(n),n);if(n===page)nav.lastChild.setAttribute('aria-current','page')}
+  button('다음',page+1,page>=data.pages);
+ }catch(e){if(id!==requestId||e.name==='AbortError')return;$('count').textContent='—';$('results-tip').textContent='검색 결과를 가져오지 못했습니다.';$('resultlist').innerHTML='<div class="empty"><strong>검색 결과를 표시할 수 없습니다.</strong><p>오류 안내를 확인해 주세요.</p></div>';alertNotice(e.message)}
+ finally{if(id===requestId){btn.disabled=false;btn.textContent='검색하기 ↗'}}
+}
+$('query').addEventListener('focus',showHistory);
+$('query').addEventListener('click',showHistory);
+document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))hideHistory()});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape')hideHistory();
+ if(e.key==='ArrowDown'&&!$('history').classList.contains('hidden')&&document.activeElement===$('query')){e.preventDefault();$('history').querySelector('button')?.focus()}
+});
+for(const id of ['sort','manufacturer','foodType','pageSize'])$(id).addEventListener('change',()=>{if(activeQuery)doSearch(activeQuery)});
+for(const id of ['mode','searchField'])$(id).addEventListener('change',()=>{if(activeQuery)doSearch($('query').value,1,true)});
+
+function field(label,value){return `<div class="field"><dt>${safe(label)}</dt><dd>${safe(value===undefined||value===null||value===''?'미제공':value)}</dd></div>`}
+async function openDetail(index){const p=products[index];if(!p)return;const no=p.PRDLST_REPORT_NO;$('modal').classList.remove('hidden');document.body.style.overflow='hidden';$('detailBody').innerHTML='<div class="loading">제품 상세정보를 불러오는 중…</div>';try{const r=await fetch('/api/detail?'+new URLSearchParams({report_no:no,mode:currentMode}));const data=await r.json();if(!r.ok)throw new Error(data.error||'상세 조회 실패');const item=data.product;const name=val(item,'PRDLST_NM'),company=val(item,'BSSH_NM');const query=name+' '+company;const imgG=qlink('https://www.google.com/search?tbm=isch&q=',query+' 제품 포장');const imgN=qlink('https://search.naver.com/search.naver?where=image&query=',query+' 제품');const back=qlink('https://www.google.com/search?tbm=isch&q=',query+' 표시사항 뒷면');const priceN=qlink('https://search.shopping.naver.com/search/all?query=',query);const priceG=qlink('https://www.google.com/search?tbm=shop&q=',query);$('detailBody').innerHTML=`<h2 class="detailtitle" id="detailTitle">${safe(name)}</h2><p class="company">${safe(company)} ${data.mode==='demo'?'· 체험용 예시 데이터':'· 식품안전나라 공식 조회'}</p><div class="detailsub">공식 품목제조보고 정보</div><div class="fields">${field('품목제조보고번호',item.PRDLST_REPORT_NO)}${field('인허가번호',item.LCNS_NO)}${field('식품유형',val(item,'PRDLST_DCNM','PRDLST_CDNM'))}${field('보고일자',item.PRMS_DT)}${field('식품대분류명',p.nutrition?.category)}${field('에너지',nutritionText(p.nutrition))}${field('소비기한',val(item,'POG_DAYCNT','VLD_PRD_YMD'))}${field('제품형태',item.DISPOS)}${field('포장재질',item.FRMLC_MTRQLT)}${field('생산종료 여부',item.PRODUCTION)}${field('업종',item.INDUTY_CD_NM)}${field('내수/겸용구분',val(item,'ETQTY_XPORT_PRDLST_YN'))}</div><div class="detailsub">원재료 정보</div><div class="ingredients">${data.ingredients.length?data.ingredients.map(v=>`<span>${safe(v)}</span>`).join(''):'<p class="muted">표시할 원재료 정보가 없습니다.'+(data.ingredients_status==='api_error'?' (원재료 API 조회 오류)':'')+'</p>'}</div><div class="detailsub">앞면 · 뒷면 이미지 찾기</div><div class="linkrow"><a href="${imgG}" target="_blank" rel="noopener noreferrer">구글 앞면 이미지 ↗</a><a href="${imgN}" target="_blank" rel="noopener noreferrer">네이버 이미지 ↗</a><a href="${back}" target="_blank" rel="noopener noreferrer">뒷면 표시사항 ↗</a></div><div class="caution">검색된 이미지는 동일 제품으로 검증되지 않았습니다. 제조사·규격·품목보고번호를 직접 대조하세요. 이미지 자동 수집 및 매칭은 아직 구현되지 않았습니다.</div><div class="detailsub">온라인 판매가 찾아보기</div><div class="linkrow"><a href="${priceN}" target="_blank" rel="noopener noreferrer">네이버쇼핑 검색 ↗</a><a href="${priceG}" target="_blank" rel="noopener noreferrer">구글쇼핑 검색 ↗</a></div><p class="muted">판매가 자동 비교 및 최저가 산출은 아직 구현 전입니다. B2B 제품은 온라인 판매 정보가 없을 수 있습니다.</p>`}catch(e){$('detailBody').innerHTML=`<p class="caution">${safe(e.message)}</p>`}}
 function closeModal(){$('modal').classList.add('hidden');document.body.style.overflow=''}
-$('searchForm').addEventListener('submit',e=>{e.preventDefault();doSearch($('query').value)});
-document.querySelectorAll('[data-term]').forEach(b=>b.addEventListener('click',()=>{$('query').value=b.dataset.term;doSearch(b.dataset.term)}));
+$('searchForm').addEventListener('submit',e=>{e.preventDefault();doSearch($('query').value,1,true)});
+
 $('resultlist').addEventListener('click',e=>{const el=e.target.closest('[data-index]');if(el)openDetail(Number(el.dataset.index))});
 $('close').addEventListener('click',closeModal);$('overlay').addEventListener('click',closeModal);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
