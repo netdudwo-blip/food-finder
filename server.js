@@ -224,7 +224,7 @@ async function route(req,res){
   }catch{ingredients_status='api_error'}
   return send(res,200,{product,ingredients,mode,ingredients_status});
  }
- const assets={'/':'index.html','/static/app.js':'static/app.js','/static/search-ui.js':'static/search-ui.js','/static/style.css':'static/style.css'};
+ const assets={'/static/sections.js':'static/sections.js','/':'index.html','/static/app.js':'static/app.js','/static/search-ui.js':'static/search-ui.js','/static/style.css':'static/style.css'};
  if(!assets[u.pathname])return send(res,404,{error:'페이지를 찾을 수 없습니다.'});
  const file=path.join(root,assets[u.pathname]);
  let body=fs.readFileSync(file);
