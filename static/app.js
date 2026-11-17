@@ -86,6 +86,7 @@ async function doSearch(query,wantedPage=1,newSearch=false){
   }
   $('resultmode').textContent=currentMode==='demo'?'체험 데이터':'식품안전나라 실시간';
   renderResults(wantedPage);
+  if(data.checkedAt)alertNotice('자료 확인 '+new Date(data.checkedAt).toLocaleString('ko-KR')+(data.stale?' · 최근 저장 결과 표시 중, 서버에서 갱신하고 있습니다.':''));
  }catch(e){if(id!==requestId||e.name==='AbortError')return;$('resultmode').textContent='검색 실패';$('count').textContent='—';$('results-tip').textContent='검색 결과를 가져오지 못했습니다.';$('resultlist').innerHTML='<div class="empty"><strong>검색 결과를 표시할 수 없습니다.</strong><p>오류 안내를 확인해 주세요.</p></div>';alertNotice(e.message)}
  finally{if(id===requestId){btn.disabled=false;btn.textContent='검색하기 ↗'}}
 }

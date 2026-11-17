@@ -11,7 +11,8 @@ const crypto=require('node:crypto');
 const search=require('./lib/search');
 const enrich=require('./lib/nutrition').createEnricher();
 const shopping=require('./lib/shopping').createShopping();
-const snapshots=new Map();
+const cachedSearch=require('./lib/search-cache')((q,field)=>search.collect(fetchAPI,q,field),
+ process.env.FOOD_SEARCH_CACHE_DIR||path.join(require('node:os').tmpdir(),'food-finder-search-v1'));
 const root=__dirname;
 const PORT=Number(process.env.PORT||3000);
 const DEMO=[
@@ -210,18 +211,14 @@ async function route(req,res){
   if(mode==='demo')rows=DEMO.filter(p=>(o.field==='all'?search.FIELDS:[o.field]).some(f=>String(p[f]||'').toLowerCase().includes(o.q.toLowerCase())));
   else{
    if(!key())return send(res,503,{error:'서버에 FOODSAFETY_API_KEY가 설정되지 않았습니다.'});
-   const id=JSON.stringify([o.q,o.field]);let cached=snapshots.get(id);
-   if(!cached||cached.expires<Date.now()){
-    if(snapshots.size>=20)snapshots.delete(snapshots.keys().next().value);
-    cached={expires:Date.now()+300000,promise:search.collect(fetchAPI,o.q,o.field)};
-    snapshots.set(id,cached);
-    cached.promise.catch(()=>{if(snapshots.get(id)===cached)snapshots.delete(id)});
-   }
-   rows=await cached.promise;
+   const cached=await cachedSearch(o.q,o.field);
+   rows=cached.rows;
+   res.setHeader('X-Search-Checked-At',new Date(cached.checkedAt).toISOString());
+   res.setHeader('X-Search-Stale',String(cached.stale));
   }
   if(u.searchParams.get('view')==='list'){
    const fields=[...search.FIELDS,'PRMS_DT'];
-   return send(res,200,{mode,rows:rows.map(p=>Object.fromEntries(fields.map(k=>[k,p[k]])))});
+   return send(res,200,{mode,checkedAt:res.getHeader('X-Search-Checked-At'),stale:res.getHeader('X-Search-Stale')==='true',rows:rows.map(p=>Object.fromEntries(fields.map(k=>[k,p[k]])))});
   }
   const result=search.select(rows,o);
   result.rows=mode==='live'?await enrich(result.rows):result.rows.map(p=>({...p,nutrition:require('./lib/nutrition').missing('demo')}));
