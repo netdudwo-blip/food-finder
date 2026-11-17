@@ -84,10 +84,17 @@
   }
   applySize(p.filing,p.filing?.sales);
 
+  function basicValue(key,fallback){
+   const filing=p.filing;
+   if(!filing?.basics?.[key]||!filing.sales)return fallback;
+   const value=el('span',filing.basics[key]);
+   value.append(el('small',' · '+filing.sales.period+' 기준 '),link('감사보고서',filing.sales.source));
+   return value;
+  }
   const basic=infoTable('등록 및 연락처',p.name),business=infoTable('사업 및 인증',p.name);
   field(basic.body,'사업자등록번호',p.biz);field(basic.body,'법인등록번호',p.id);
-  field(basic.body,'대표자명',p.ceo);field(basic.body,'설립일자',p.founded);field(basic.body,'소재지',p.address);
-  field(basic.body,'전화번호',p.phone);field(basic.body,'대표 홈페이지',p.home?link(p.home,p.home):null);
+  field(basic.body,'대표자명',basicValue('ceo',p.ceo));field(basic.body,'설립일자',p.founded);field(basic.body,'소재지',basicValue('address',p.address));
+  field(basic.body,'전화번호',basicValue('phone',p.phone));field(basic.body,'대표 홈페이지',p.home?link(p.home,p.home):null);
   function factCell(label,base,key,suffix=''){
    const td=field(business.body,label,base);
    const apply=(facts,sale)=>{
@@ -101,7 +108,7 @@
   const cert=el('span','미확인 · ');cert.append(link('HACCP 인증 확인','https://www.haccp.or.kr/'));field(business.body,'인증현황',cert);
   field(business.body,'국세청 산업분류','미제공 (등록 업종코드 미확인)');
   const staff=factCell('사원수',p.employees!=null&&p.employees!==''?p.employees+'명 (2026년 5월 지정자료)':null,'employees','명');
-  field(business.body,'사업내용',p.business);
+  field(business.body,'사업내용',basicValue('business',p.business));
   const grid=el('div',null,'company-info-grid');grid.append(basic.group,business.group);
   const sources=el('p','기본정보 확인일 2026-11-16 · ','company-source-note');
   sources.append(link('금감원 기업개황','https://dart.fss.or.kr/dsae001/main.do'),' · ',link('한국거래소 주요제품','https://kind.krx.co.kr/corpgeneral/corpList.do?method=loadInitPage'),' · ',link('공정위 2026년 5월 지정자료','https://egroup.go.kr/egps/wi/stat/kap/psitnCmpnySumryList.do'));

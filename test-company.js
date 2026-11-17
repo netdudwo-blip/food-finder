@@ -119,3 +119,19 @@ test('company UI distinguishes empty results from lookup errors and keeps known 
  assert.match(nodes.sheet.textContent,/조회 지연/);
  assert.equal(nodes.submit.disabled,false);
 });
+
+test('nonlisted audit revenue reads current-year total across blank accounting columns',()=>{
+ const {auditRevenue}=require('./lib/company-revenue');
+ const html='<p>손 익 계 산 서</p><table><tr><td>제22기 2025년 01월 01일부터 2025년 12월 31일까지</td></tr><tr><td>제21기 2024년 01월 01일부터 2024년 12월 31일까지</td></tr><tr><td>(단위 : 원)</td></tr></table><table><tr><td>Ⅰ.매출액(주석3,28)</td><td></td><td>241,090,224,579</td><td></td><td>227,319,538,325</td></tr></table>';
+ assert.equal(auditRevenue(html,2025,'20260406002146').amount,'241090224579');
+ assert.equal(auditRevenue(html,2024,'20260406002146'),null);
+ assert.equal(auditRevenue(html.replace('(단위 : 원)',''),2025,'20260406002146'),null);
+});
+
+test('Whoneed profile includes verified audit sales and sourced business details',async()=>{
+ const p=await require('./lib/company').profile('1101113135418');
+ assert.equal(p.sales.amount,'241090224579');
+ assert.equal(p.sales.period,'2025-12-31');
+ assert.match(p.filing.basics.business,/위탁급식/);
+ assert.equal(p.filing.basics.ceo,'손병재, 김진무');
+});
