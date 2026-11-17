@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FOOD FINDER | 식품 구매 검색</title><meta name="description" content="식품안전나라 품목제조보고 기반 식품 검색 서비스"><link rel="stylesheet" href="/static/style.css?v=blue-1"></head><body>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FOOD FINDER | 식품 구매 검색</title><meta name="description" content="식품안전나라 품목제조보고 기반 식품 검색 서비스"><link rel="stylesheet" href="/static/style.css?v=bid-1"></head><body>
 <header class="site-header">
   <div class="shell top">
     <a class="brand" href="/" aria-label="FOOD FINDER 홈">
@@ -86,16 +86,81 @@
 <h1>기업 검색</h1><p>법인명이나 등록번호로 거래처를 찾아 기업 정보와 최근 확인된 연간 매출을 확인하세요.</p>
 <form id="company-form" class="panel"><label for="company-query">법인명 · 사업자등록번호 · 법인등록번호</label><div class="company-search"><input id="company-query" name="company" maxlength="80" placeholder="예: 대상" required><button type="submit">기업 검색</button></div></form>
 <p id="company-status" role="status">금감원 공시 법인과 공정위 지정 기업집단 소속회사를 검색합니다.</p><div id="company-list"></div>
-<article id="company-sheet" class="panel" hidden></article></section><section class="tabview sectionpage" id="compare" hidden><h1>동일제품 비교 및 유사제품 비딩</h1><p>기준 상품을 선택한 뒤 판매처별 견적을 비교하세요. 금액은 배송비 제외 상품가입니다.</p>
-<label>비교할 상품 <select id="benchmark"></select></label>
-<div class="panel"><h2>판매처별 가격</h2><p id="chart-unit"></p><div id="quotes"></div></div>
-<details class="panel"><summary>판매처 견적 추가</summary><p>직접 확인한 견적은 이 브라우저에 저장됩니다. 동일제품은 제조사·제품·규격을 확인해 주세요.</p>
-<form id="quote-form"><label>기준 상품명과 규격<input name="group" required maxlength="100"></label><label>비교 구분<select name="kind"><option>동일제품</option><option>유사제품</option></select></label><label>판매 상품명과 규격<input name="item" required maxlength="100"></label><label>판매처<input name="seller" required maxlength="70"></label><label>판매 페이지<input type="url" name="link" required placeholder="https://"></label><label>상품 가격(원)<input type="number" name="price" min="1" max="1000000000" required></label><label>포장 전체 용량·수량<input type="number" name="amount" min="0.01" step="any" max="100000000" required></label><label>단위<select name="unit"><option>mL</option><option>g</option><option>개</option></select></label><button>견적 추가</button></form><p id="quote-msg" role="status"></p></details></section>
+<article id="company-sheet" class="panel" hidden></article></section><section class="tabview sectionpage bid-page" id="compare" hidden>
+  <span class="sectiontag">PURCHASE COMPARISON</span>
+  <h1>동일제품 비교 및 유사제품 비딩</h1>
+  <section class="finder" id="bid-finder" aria-label="비교 기준품 통합검색"></section>
+  <section class="panel bid-panel" aria-labelledby="bid-compare-title">
+    <div class="bid-heading"><div><span class="sectiontag">02 / BID COMPARISON</span><h2 id="bid-compare-title">기준품 및 견적 비교</h2></div><span id="bid-match-mode" class="smalllabel">기준품 선택 전</span></div>
+    <div class="bid-table-wrap" role="region" aria-label="기준과 1안·2안·3안 상세 비교" tabindex="0">
+      <table class="bid-matrix" id="bid-matrix"><caption class="bid-only-sr">기준품과 선택한 견적 최대 3개</caption></table>
+    </div>
+    <p class="hint">판매 단위 1개 기준. 단위가는 배송비 포함이며 배송비가 미제공인 견적은 최저가 순위에서 제외합니다.</p>
+    <p id="bid-base-id" class="hint"></p>
+    <details class="bid-details" id="bid-base-details" hidden><summary>기준품 포장 규격·바코드 확인 입력</summary>
+      <form id="bid-base-form" class="bid-entry">
+        <label>낱개 용량·중량·수량<input name="amount" type="number" min="0.001" max="10000000" step="any"></label>
+        <label>단위<select name="unit"><option>mL</option><option>g</option><option>개</option></select></label>
+        <label>한 판매 단위의 낱개 수<input name="count" type="number" min="1" max="100000"></label>
+        <label>바코드<input name="barcode" inputmode="numeric" maxlength="14"></label>
+        <label>유통전문판매원<input name="distributor" maxlength="120"></label>
+        <button type="submit">기준품 정보 저장</button>
+      </form>
+      <p class="hint">실제 라벨로 확인한 수치만 입력하세요. 예를 들어 1.8 L × 6병은 1800 / mL / 6으로 입력합니다.</p>
+      <p id="bid-base-msg" class="hint" role="status"></p>
+    </details>
+  </section>
+  <section class="panel bid-panel" aria-labelledby="bid-list-title">
+    <div class="bid-heading"><div><span class="sectiontag">03 / LISTINGS</span><h2 id="bid-list-title">판매처 상품 목록 <span id="bid-count">0건</span></h2></div><span class="smalllabel" id="bid-selection" role="status">비교 선택 0/3</span></div>
+    <p id="bid-list-note" class="hint"></p>
+    <div class="bid-table-wrap" role="region" aria-label="판매처 목록" tabindex="0">
+      <table class="bid-list">
+        <thead><tr><th scope="col">비교</th><th scope="col">제품명 · 판매처</th><th scope="col">제조사</th><th scope="col">포장 규격</th><th scope="col" class="bid-num">단위당 가격</th><th scope="col" class="bid-num">판매금액</th><th scope="col" class="bid-num">배송비</th><th scope="col" class="bid-num">합계</th><th scope="col">판매 링크</th></tr></thead>
+        <tbody id="bid-offers"></tbody>
+      </table>
+    </div>
+    <div class="bid-list-foot"><span id="bid-range" aria-live="polite"></span><nav id="bid-pages" class="pagination" aria-label="판매처 목록 페이지"></nav></div>
+    <div id="bid-discovery" class="bid-discovery" hidden>
+      <h3>판매처 찾기</h3><div id="bid-shop-links" class="linkrow"></div>
+      <p class="hint" id="bid-provider-status" role="status"></p>
+      <div class="bid-provider-buttons"><button type="button" id="bid-web" hidden>웹 후보 불러오기</button></div>
+      <ul id="bid-leads" class="bid-leads" aria-label="아직 동일성·배송비 미확인인 판매처 후보"></ul>
+    </div>
+    <details class="bid-details" id="bid-quote-details" hidden><summary>확인한 판매처 견적 추가</summary>
+      <form id="bid-quote-form" class="bid-entry">
+        <label>판매처 제품명<input name="item" required maxlength="120"></label>
+        <label>판매처명<input name="seller" required maxlength="100"></label>
+        <label>제조사<input name="maker" maxlength="120"></label>
+        <label>유통전문판매원<input name="distributor" maxlength="120"></label>
+        <label>품목제조보고번호<input name="report" maxlength="40"></label>
+        <label>바코드<input name="barcode" inputmode="numeric" maxlength="14"></label>
+        <label>낱개 용량·중량·수량<input name="amount" type="number" min="0.001" max="10000000" step="any"></label>
+        <label>단위<select name="unit"><option>mL</option><option>g</option><option>개</option></select></label>
+        <label>한 판매 단위의 낱개 수<input name="count" type="number" min="1" max="100000"></label>
+        <label>판매금액(원)<input name="price" type="number" min="1" max="1000000000" step="1" required></label>
+        <label>배송비(원) · 모르면 빈칸<input name="shipping" type="number" min="0" max="1000000000" step="1"></label>
+        <label>판매 페이지 주소<input name="link" type="url" maxlength="2048" required placeholder="https://"></label>
+        <label>확인일<input name="date" type="date" required></label>
+        <label>비교 구분<select name="intent"><option value="check">동일 여부 대조</option><option value="similar">유사제품 후보</option></select></label>
+        <label class="bid-label-check"><input type="checkbox" name="labelChecked"> 라벨에서 제품명·제조사가 기준품과 같음을 확인</label>
+        <button type="submit">견적 저장</button>
+      </form>
+      <p class="hint">견적은 이 브라우저에 저장됩니다. 배송비 무료로 확인한 경우에만 0원을 입력하세요.</p>
+      <p id="bid-quote-msg" class="hint" role="status"></p>
+    </details>
+    <details class="bid-details" id="bid-review-details" hidden>
+      <summary id="bid-review-title"></summary><ul id="bid-review" class="bid-leads"></ul>
+    </details>
+    <details class="bid-details" id="bid-legacy-details" hidden>
+      <summary id="bid-legacy-title"></summary><p class="hint">기존 견적은 그대로 보존됩니다. 항목을 선택해 정보를 복사한 뒤 기준품과 포장 규격을 확인해 새 견적으로 저장하세요.</p><ul id="bid-legacy" class="bid-leads"></ul>
+    </details>
+  </section>
+</section>
 <section class="tabview sectionpage" id="market" hidden><h1>식품 원자재 동향</h1><div class="panel"><h2>소비자물가 전년동월비</h2><p>전국 총지수 · 2025년 10월 ~ 2026년 10월 · 단위 %</p><div id="cpi-chart"></div><a href="https://mods.go.kr/boardDownload.es?bid=213&amp;list_no=447801&amp;seq=2">국가데이터처 2026년 10월 발표자료</a></div><h2>구매 담당자가 살펴볼 지표 10개</h2><p>원가 변화를 설명할 후보 지표와 판매가격에 반영된 결과 지표를 함께 제안합니다.</p><div id="indicators"></div><details class="panel"><summary>KAMIS에서 확인할 수 있는 범위</summary><p>aT의 일별 품목별 소매가격 API는 최대 1년의 기간을 지정할 수 있습니다. 요청자 ID와 인증키가 필요하며 품목·품종·등급·지역·단위를 맞춰 비교합니다. 현재 화면에는 KAMIS 실시간 가격을 표시하지 않습니다.</p><a href="https://www.kamis.or.kr/customer/reference/openapi_list.do?action=detail&amp;boardno=17">KAMIS 공식 API 명세</a></details></section>
 <section class="tabview sectionpage" id="faq" hidden><h1>FAQ 및 협업 문의</h1>
 <details class="panel" open><summary>제품과 영양정보는 어디에서 가져오나요?</summary><p>제품 검색은 <a href="https://www.foodsafetykorea.go.kr/api/openApiInfo.do?svc_no=I1250">식품안전나라 품목제조보고</a>를 조회합니다. <a href="https://www.data.go.kr/data/15127578/openapi.do">식약처 식품영양성분DB</a>에서 품목번호가 한 건으로 일치할 때 대분류와 기준량당 에너지를 표시합니다. 값이 없거나 조회에 실패하면 결과에 사유가 표시됩니다.</p></details>
 <details class="panel"><summary>검색 결과를 어떻게 좁히나요?</summary><p>검색 대상을 선택하거나 결과에서 제조사·식품유형을 선택하세요. 보고일자 최신순과 10·30·50개 보기를 사용할 수 있습니다. 원본 조회가 5,000행을 넘으면 검색어를 좁혀 주세요.</p><a href="/diagnostics">연결 진단 열기</a></details>
-<details class="panel"><summary>판매처 가격과 물가 차트는 어떻게 읽나요?</summary><p>판매처 공개 페이지에서 확인한 가격과 직접 입력한 견적을 구분해 표시합니다. 같은 기준량의 상품가를 비교하고 배송비·쿠폰·재고는 판매처에서 확인하세요. 물가 차트는 국가데이터처 발표월 기준이며 각 지표의 공식 출처는 원자재 동향 탭에서 열 수 있습니다.</p></details>
+<details class="panel"><summary>판매처 가격과 물가 차트는 어떻게 읽나요?</summary><p>동일제품은 확인한 배송비를 포함한 견적 총액으로 비교합니다. 견적 확인일과 판매 링크를 확인하세요. 온라인 검색 후보는 동일 여부와 배송비를 확인하기 전에는 가격 순위에 반영하지 않습니다. 물가 차트는 국가데이터처 발표월 기준이며 각 지표의 공식 출처는 원자재 동향 탭에서 열 수 있습니다.</p></details>
 <div class="panel"><h2>개발자에게 협업 제안</h2><p>데이터 연동, 판매처 견적 제공, 기능 개선을 제안해 주세요. GitHub 로그인 후 공개 게시되므로 연락처나 거래 조건 등 비공개 정보는 제외해 주세요.</p><a class="action" href="https://github.com/netdudwo-blip/food-finder/issues/new?title=%5B협업%20제안%5D%20&amp;body=제안%20목적%0A%0A협업하고%20싶은%20내용%0A">협업 제안 작성하기 ↗</a></div></section><footer class="site-footer">FOOD FINDER · Web 0.6 <span>공식 품목정보 출처: 식품안전나라 · 본 서비스는 공공기관 공식 사이트가 아닙니다.</span></footer></main>
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle"><div class="overlay" id="overlay"></div><div class="drawer"><div class="drawerhead"><span class="sectiontag">PRODUCT DETAILS</span><button id="close" aria-label="닫기">✕</button></div><div id="detailBody"></div></div></div>
-<script src="/static/search-ui.js" defer></script><script src="/static/result-page.js" defer></script><script src="/static/app.js" defer></script><script src="/static/company.js" defer></script><script src="/static/sections.js?v=blue-1" defer></script></body></html>
+<script src="/static/search-ui.js?v=bid-1" defer></script><script src="/static/result-page.js" defer></script><script src="/static/app.js?v=bid-1" defer></script><script src="/static/company.js" defer></script><script src="/static/sections.js?v=bid-1" defer></script><script src="/static/buying.js?v=bid-2" defer></script><script src="/static/buying-view.js?v=bid-2" defer></script></body></html>

@@ -16,7 +16,7 @@ test('view changes reuse search results even while nutrition is pending',async()
   document:{getElementById:get,createElement:element,addEventListener(){},querySelectorAll(){return []}},
   fetch:async url=>{requests.push(url);if(url.startsWith('/api/nutrition'))return new Promise(()=>{});
    return {ok:true,json:async()=>({rows})}}});
- for(const file of ['result-page','app'])vm.runInContext(fs.readFileSync(__dirname+'/static/'+file+'.js','utf8'),context);
+ for(const file of ['search-ui','result-page','app'])vm.runInContext(fs.readFileSync(__dirname+'/static/'+file+'.js','utf8'),context);
  get('pageSize').value='10';get('mode').value='live';get('searchField').value='all';
  await vm.runInContext("doSearch('대상')",context);
  for(const size of [10,30,50]){

@@ -10,6 +10,7 @@ const path=require('node:path');
 const crypto=require('node:crypto');
 const search=require('./lib/search');
 const enrich=require('./lib/nutrition').createEnricher();
+const shopping=require('./lib/shopping').createShopping();
 const snapshots=new Map();
 const root=__dirname;
 const PORT=Number(process.env.PORT||3000);
@@ -183,6 +184,8 @@ async function route(req,res){
  if(req.method!=='GET')return send(res,405,{error:'허용되지 않는 요청입니다.'});
  if(u.pathname==='/health')return send(res,200,{status:'ok',api_configured:!!key(),version:'0.6',bridge_configured:!!process.env.FOOD_FINDER_BRIDGE_URL});
  if(u.pathname==='/api/diagnostics')return send(res,200,await diagnose());
+ if(u.pathname==='/api/shopping/status')return send(res,200,shopping.status());
+ if(u.pathname==='/api/shopping/candidates')return send(res,200,await shopping.search(u.searchParams.get('provider'),u.searchParams.get('q')));
  if(u.pathname==='/diagnostics'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});return res.end(DIAGNOSTICS_HTML);}
  if(u.pathname==='/api/companies'){
   const companies=require('./lib/company');
@@ -249,7 +252,7 @@ async function route(req,res){
   }catch{ingredients_status='api_error'}
   return send(res,200,{product,ingredients,mode,ingredients_status});
  }
- const assets={'/static/company.js':'static/company.js','/static/result-page.js':'static/result-page.js','/static/sections.js':'static/sections.js','/':'index.html','/static/app.js':'static/app.js','/static/search-ui.js':'static/search-ui.js','/static/style.css':'static/style.css'};
+ const assets={'/static/company.js':'static/company.js','/static/result-page.js':'static/result-page.js','/static/sections.js':'static/sections.js','/':'index.html','/static/app.js':'static/app.js','/static/search-ui.js':'static/search-ui.js','/static/style.css':'static/style.css','/static/buying.js':'static/buying.js','/static/buying-view.js':'static/buying-view.js'};
  if(!assets[u.pathname])return send(res,404,{error:'페이지를 찾을 수 없습니다.'});
  const file=path.join(root,assets[u.pathname]);
  let body=fs.readFileSync(file);
