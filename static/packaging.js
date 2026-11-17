@@ -12,7 +12,7 @@
   for(const m of [{id:'all',title:'전체 재질'},...materials]){
    const b=node('button',m.title,m.group==='플라스틱'&&m.id!=='plastic'?'pack-subitem':'');b.type='button';b.setAttribute('aria-current',String(selected===m.id));b.onclick=()=>select(m.id);nav.append(b);
   }
-  const visible=materials.filter(m=>(selected==='all'||m.id===selected||(selected==='plastic'&&m.group==='플라스틱'))&&JSON.stringify(m).toLocaleLowerCase('ko-KR').includes(term));
+  const visible=materials.filter(m=>((selected==='all'&&(term||m.group!=='플라스틱'||m.id==='plastic'))||m.id===selected||(selected==='plastic'&&m.group==='플라스틱'))&&JSON.stringify(m).toLocaleLowerCase('ko-KR').includes(term));
   document.getElementById('pack-count').textContent=visible.length+'개 재질';
   intro.replaceChildren();host.replaceChildren();
   if(!visible.length){intro.append(node('p','일치하는 재질이 없습니다. 검색어를 바꾸거나 전체 재질을 선택하세요.'));return}
