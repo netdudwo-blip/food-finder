@@ -63,3 +63,14 @@ GitHub에서는 기존 파일의 내용 변경을 웹 편집기로 수행하거�
 - 최근 연간 매출은 당해 연도부터 이전 3개 연도의 DART 사업보고서를 확인합니다. 한 사업연도에 개별·별도 자료를 먼저 확인하고 연결 자료도 확인합니다. 12개 식품사의 검증된 공시를 함께 제공합니다. 신규 조회 시 확인한 금액에는 원문 링크, 금액 단위와 결산일을 표시합니다.
 - Render 서버에 NTS_BUSINESS_API_KEY를 설정하면 [국세청 사업자등록 상태](https://www.data.go.kr/data/15081808/openapi.do)를, HACCP_COMPANY_API_KEY를 설정하면 [HACCP 인증업체정보](https://www.data.go.kr/data/15033311/openapi.do)를 조회합니다. 각 서비스 활용 승인을 받은 일반 인증키(Decoding)를 사용합니다. HACCP은 검색 응답에서 사업자번호가 일치하는 사업장·품목의 인증번호와 종료일을 표시합니다.
 - 국세청 업종코드는 현재 수록 자료에서 확인할 수 없어 미제공으로 표시합니다.
+## 식품 동향 화면 · 2026-11-17 확인본
+
+- 6개 카드에서 각기 연간·월간을 선택합니다. 데이터는 static/market-data.json 확인본이며 자동 갱신은 아직 연결 전입니다.
+- 물가 월간 총지수는 국가데이터처 2026년 10월 소비자물가 발표의 전년동월비입니다. 연간은 세계은행 FP.CPI.TOTL.ZG(KOR, IMF International Financial Statistics) 확인본입니다.
+- 원/달러는 Federal Reserve H.10 / FRED DEXKOUS 일별 관측치에서 완료 월 평균을 계산합니다. 연간은 12개월 월평균의 평균입니다.
+- 브렌트·WTI·미국 소맥 SRW/HRW는 World Bank Commodity Price Data (Pink Sheet) 월평균이며 연간은 12개월이 확보된 해의 평균입니다. https://www.worldbank.org/en/research/commodity-markets
+- 임금은 최저임금위원회 연도별 결정현황입니다. 월간 그래프에는 해당 월 적용 시급을 표시합니다.
+- 소비자물가 세부 항목은 KOSIS/ECOS 12년 원본을 확보해야 합니다. 에틸렌·나프타는 원본의 공표 단위·월평균 여부를 확인해야 합니다. KAMIS 추가 시 requester ID와 키, 지역·품목·등급·단위 결정이 필요합니다.
+- 사진은 Unsplash 일반 라이선스(상업 이용 허용)의 실제 식품 사진입니다. https://unsplash.com/license
+  - https://images.unsplash.com/photo-1542838132-92c53300491e (채소 진열)
+  - https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38 (식재료 접시)

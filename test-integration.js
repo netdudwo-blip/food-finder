@@ -10,6 +10,7 @@ test('live HTTP route signs bridge ranges, fetches 1103 results, then filters an
   assert.equal(signed(init.headers['X-Food-Finder-Timestamp'],init.headers['X-Food-Finder-Signature'],b.service,b.field,b.term,b.limit,b.start),true);
   return {ok:true,json:async()=>({rows:source.slice(b.start-1,b.start-1+b.limit),total:source.length})};
  };
+ process.env.FOOD_SEARCH_CACHE_DIR=require('node:fs').mkdtempSync(require('node:path').join(require('node:os').tmpdir(),'food-integration-'));
  const {server}=require('./server');await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base='http://127.0.0.1:'+server.address().port;
  try{
   let response=await nativeFetch(base+'/api/search?'+new URLSearchParams({q:'검증',field:'PRDLST_NM',page:6,size:10}));assert.equal(response.status,200);let data=await response.json();assert.equal(data.total,1103);assert.equal(data.rows[0].PRDLST_REPORT_NO,'100050');assert.deepEqual(calls.map(c=>[c.start,c.limit]),[[1,1000],[1001,1000]]);
