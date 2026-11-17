@@ -146,9 +146,10 @@
   </section>
 </section>
 <section class="tabview sectionpage packaging-page" id="packaging" hidden>
-<div class="pack-intro"><span class="sectiontag">식품 포장재 백과</span><h1>사진으로 이해하는 식품 포장재</h1><p>생김새로 구분하고, 만드는 방법과 주문할 때 확인할 조건을 살펴보세요.</p></div>
-<div class="pack-toolbar"><label>종류<select id="pack-filter"><option value="">전체</option><option>필름·봉투</option><option>플라스틱 용기</option><option>종이·펄프</option><option>유리</option><option>금속</option></select></label><label class="pack-search">찾아보기<input id="pack-query" type="search" placeholder="재질·용도·제품명 검색"></label><span id="pack-count" role="status"></span></div>
-<div id="pack-list" class="pack-grid" aria-live="polite"></div>
+<div class="pack-intro"><span class="sectiontag">식품 포장재 백과</span><h1>사진으로 이해하는 식품 포장재</h1><p>재질부터 알아보세요. 특성과 만드는 방법을 읽고, 실제 포장 사진으로 비교할 수 있습니다.</p></div>
+<div class="pack-workspace" id="pack-workspace">
+<aside class="pack-sidebar"><button id="pack-menu-toggle" type="button" aria-expanded="true" aria-controls="pack-material-nav"><span aria-hidden="true">☰</span> <span class="pack-menu-label">재질 찾아보기</span></button><nav id="pack-material-nav" aria-label="포장재 재질"></nav></aside>
+<div class="pack-main"><div class="pack-toolbar"><label class="pack-search">재질·용도 찾아보기<input id="pack-query" type="search" placeholder="예: PP, 종이, 진공 포장"></label><span id="pack-count" role="status"></span></div><div id="pack-material" aria-live="polite"></div><div id="pack-list" class="pack-grid"></div></div></div>
 <details class="panel"><summary>생산 방식과 최소주문수량을 읽는 방법</summary><p>생산 공정은 해당 포장 형태의 일반적인 제조 흐름을 설명합니다. 사진에 나온 상품의 실제 제조 공정이 공개되지 않은 경우 업체별 공정으로 단정하지 않습니다.</p><p>기성품의 판매 묶음·박스 입수량과 맞춤 생산 MOQ는 서로 다릅니다. MOQ는 규격·재질·두께·인쇄·기존 금형 사용 여부를 정한 뒤 제조사 확인이 필요합니다. 비공개 조건은 미공개로 표시합니다.</p><p>식품 접촉 적합성, 전자레인지·오븐·살균 가능 여부는 개별 완제품의 시험성적서와 공급자 표시를 확인하세요. 뚜껑과 몸체 재질도 따로 확인해야 합니다.</p></details>
 <p class="pack-sources">분류 참고 <a href="https://m.blog.naver.com/utimegps/221569542967" target="_blank" rel="noopener noreferrer">식품포장재료의 종류</a> · 사진·규격 <a href="https://www.saeropnl.com/shop/index.php" target="_blank" rel="noopener noreferrer">새로피엔엘</a> · <a href="https://www.durepack.com/" target="_blank" rel="noopener noreferrer">두레</a> · 자료 확인 2026-11-17</p>
 </section>

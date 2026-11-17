@@ -1,0 +1,241 @@
+[
+  {
+    "id": "paper",
+    "title": "종이·판지·펄프",
+    "group": "종이",
+    "feature": "가볍고 인쇄하기 쉬운 섬유 기반 재료",
+    "caution": "젖거나 기름이 닿으면 성능이 달라져요. 코팅·합지 여부를 함께 봅니다.",
+    "process": "펄프 → 초지·건조 → 인쇄·코팅 → 재단·접기 / 펄프 용기는 금형 성형",
+    "example": "베이커리 상자, 종이컵, 펄프 도시락",
+    "check": "코팅층·접착제·식품 접촉면, 내유·내수 성능",
+    "sources": [
+      [
+        "Huhtamaki · 섬유 포장",
+        "https://www.huhtamaki.com/en/"
+      ]
+    ],
+    "photos": [
+      2,
+      4,
+      5
+    ]
+  },
+  {
+    "id": "glass",
+    "title": "유리",
+    "group": "유리",
+    "feature": "내용물이 보이고 가스·수분을 잘 막는 단단한 용기",
+    "caution": "무겁고 충격·급격한 온도 변화에 깨질 수 있어요.",
+    "process": "원료 용융 → 금형 성형 → 서냉 → 검사",
+    "example": "잼병, 소스병, 음료병",
+    "check": "병 입구·캡 규격, 파손 포장, 충전·살균 조건",
+    "sources": [
+      [
+        "British Glass · 유리 용기",
+        "https://www.britglass.org.uk/about-glass/glass-products"
+      ]
+    ],
+    "photos": [
+      3
+    ]
+  },
+  {
+    "id": "metal",
+    "title": "금속",
+    "group": "금속",
+    "feature": "빛·가스·수분을 막는 캔과 알루미늄 포일",
+    "caution": "부식과 내용물 반응을 고려해 내부 코팅·밀봉을 확인합니다.",
+    "process": "금속판 성형 → 몸통·끝판 결합 / 포일 압연 → 프레스 성형",
+    "example": "통조림 캔, 음료 캔, 포일 트레이",
+    "check": "내면 도막, 이음부 밀봉, 산성·염분 식품 적합성",
+    "sources": [
+      [
+        "Sonoco · 식품 캔",
+        "https://www.sonoco.com/emea/products/metal-packaging/food-cans-and-ends"
+      ]
+    ],
+    "photos": [
+      8
+    ]
+  },
+  {
+    "id": "cellophane",
+    "title": "셀로판",
+    "group": "셀로판",
+    "feature": "목재 펄프의 셀룰로오스를 재생한 투명 필름",
+    "caution": "일반 필름과 방습·열접착 코팅 필름은 성능이 달라요. OPP와 다른 재질입니다.",
+    "process": "셀룰로오스 용해 → 필름 재생·세척 → 건조 → 필요 시 코팅",
+    "example": "과자·초콜릿 포장, 꼬임 포장",
+    "check": "코팅 유무, 방습·열접착 등급, 식품 접촉 적합성",
+    "sources": [
+      [
+        "Futamura · 셀로판 필름",
+        "https://www.futamuragroup.com/cellophane-films/"
+      ]
+    ],
+    "photos": []
+  },
+  {
+    "id": "plastic",
+    "title": "플라스틱",
+    "group": "플라스틱",
+    "feature": "수지와 가공 방식에 따라 봉투·병·용기로 달라지는 재료",
+    "caution": "재질 이름만으로 내열온도나 전자레인지 사용을 판단하지 않습니다.",
+    "process": "필름 압출 / 시트 열성형 / 사출 / 병 블로 성형",
+    "example": "필름·파우치, 도시락, 샐러드 용기",
+    "check": "몸체·뚜껑·접착층 각각의 재질과 완제품 사용 표시",
+    "sources": [
+      [
+        "식약처 · 플라스틱 용기 사용법",
+        "https://www.foodsafetykorea.go.kr/portal/board/boardDetail.do?bbs_no=bbs231&menu_grp=MENU_NEW01&menu_no=2694&ntctxt_no=1082124"
+      ]
+    ],
+    "photos": [
+      0,
+      1,
+      6,
+      7
+    ]
+  },
+  {
+    "id": "pe",
+    "title": "PE · 폴리에틸렌",
+    "group": "플라스틱",
+    "feature": "유연한 필름부터 단단한 병까지 쓰는 수지",
+    "caution": "LDPE·LLDPE는 필름에, HDPE는 봉투·병 등에 활용합니다. 등급에 따라 성능이 다릅니다.",
+    "process": "수지 압출 → 필름 냉각·권취 → 재단·접합 / 병 블로 성형",
+    "example": "식품 봉투, 밀봉층, HDPE 병",
+    "check": "밀도 등급, 두께, 밀봉성, 저온 사용 조건",
+    "sources": [
+      [
+        "Dow · 포장용 수지",
+        "https://www.dow.com/en-us/market/mkt-packaging.html"
+      ]
+    ],
+    "photos": []
+  },
+  {
+    "id": "pp",
+    "title": "PP · 폴리프로필렌",
+    "group": "플라스틱",
+    "feature": "필름·용기 모두에 쓰는 수지",
+    "caution": "OPP는 연신 필름으로 인쇄층 등에, CPP는 무연신 필름으로 열접합층 등에 사용합니다.",
+    "process": "필름 압출·연신(OPP) / 캐스팅(CPP) / 사출·열성형",
+    "example": "과자 겉포장, PP 도시락 트레이",
+    "check": "OPP·CPP 구분, 씰층 구조, 뚜껑 별도 재질",
+    "sources": [
+      [
+        "식약처 · 플라스틱 용기 사용법",
+        "https://www.foodsafetykorea.go.kr/portal/board/boardDetail.do?bbs_no=bbs231&menu_grp=MENU_NEW01&menu_no=2694&ntctxt_no=1082124"
+      ]
+    ],
+    "photos": [
+      0,
+      6
+    ]
+  },
+  {
+    "id": "pet",
+    "title": "PET · 폴리에틸렌 테레프탈레이트",
+    "group": "플라스틱",
+    "feature": "투명한 병·용기와 복합 필름에 쓰는 수지",
+    "caution": "일반 PET와 내열용 C-PET는 구분해야 해요. PET라고 모두 가열용은 아닙니다.",
+    "process": "시트 압출 → 열성형 / 프리폼 사출 → 연신 블로 성형",
+    "example": "음료병, 투명 샐러드 용기",
+    "check": "일반 PET·C-PET 구분, 충전 온도, 열접착층",
+    "sources": [
+      [
+        "식약처 · 플라스틱 용기 사용법",
+        "https://www.foodsafetykorea.go.kr/portal/board/boardDetail.do?bbs_no=bbs231&menu_grp=MENU_NEW01&menu_no=2694&ntctxt_no=1082124"
+      ]
+    ],
+    "photos": [
+      7
+    ]
+  },
+  {
+    "id": "pa",
+    "title": "PA · 나일론",
+    "group": "플라스틱",
+    "feature": "질기고 잘 뚫리지 않아 진공포장에 쓰는 필름",
+    "caution": "습기에 따라 차단 성능이 달라질 수 있어 다른 층과 함께 설계합니다.",
+    "process": "필름 압출 → 필요 시 연신 → 다른 필름과 합지 → 제대",
+    "example": "육가공품·진공 포장용 복합 필름",
+    "check": "PA/PE 등 층별 구조, 핀홀·내천공성, 밀봉성",
+    "sources": [
+      [
+        "Dow · 포장용 수지",
+        "https://www.dow.com/en-us/market/mkt-packaging.html"
+      ]
+    ],
+    "photos": []
+  },
+  {
+    "id": "ps",
+    "title": "PS · 폴리스티렌",
+    "group": "플라스틱",
+    "feature": "단단한 용기 또는 가볍게 발포한 포장재",
+    "caution": "일반 PS·발포 EPS·내열 등급을 구분합니다. 재질만으로 가열 가능 여부를 정하지 않습니다.",
+    "process": "시트 압출·열성형 / 발포·금형 성형",
+    "example": "요구르트 용기, 완충 포장",
+    "check": "발포 여부, 충격 강도, 완제품의 가열 사용 표시",
+    "sources": [
+      [
+        "식약처 · 플라스틱 용기 사용법",
+        "https://www.foodsafetykorea.go.kr/portal/board/boardDetail.do?bbs_no=bbs231&menu_grp=MENU_NEW01&menu_no=2694&ntctxt_no=1082124"
+      ]
+    ],
+    "photos": []
+  },
+  {
+    "id": "pvc",
+    "title": "PVC · 폴리염화비닐",
+    "group": "플라스틱",
+    "feature": "필름·랩 등의 용도에 쓰이는 수지",
+    "caution": "가소제·첨가제와 사용 조건을 확인해야 합니다. 해외의 과거 규정을 국내 전면 금지로 해석하지 않습니다.",
+    "process": "배합 → 압출·캘린더 필름 성형 → 권취",
+    "example": "일부 식품 랩·수축 필름",
+    "check": "식품 접촉 적합성, 첨가제, 지방성 식품·가열 조건",
+    "sources": [
+      [
+        "식약처 · 플라스틱 용기 사용법",
+        "https://www.foodsafetykorea.go.kr/portal/board/boardDetail.do?bbs_no=bbs231&menu_grp=MENU_NEW01&menu_no=2694&ntctxt_no=1082124"
+      ]
+    ],
+    "photos": []
+  },
+  {
+    "id": "pvdc",
+    "title": "PVDC · 폴리염화비닐리덴",
+    "group": "플라스틱",
+    "feature": "가스·수분 차단을 위한 코팅·필름 재료",
+    "caution": "복합 구조의 한 층으로 쓰일 수 있어 전체 층 구성을 확인합니다.",
+    "process": "수지 필름 압출 또는 기재에 코팅 → 합지·제대",
+    "example": "차단성 복합 필름, 일부 식품 케이싱",
+    "check": "코팅·필름 형태, 층별 재질, 열처리 조건",
+    "sources": [
+      [
+        "Dow · 포장용 수지",
+        "https://www.dow.com/en-us/market/mkt-packaging.html"
+      ]
+    ],
+    "photos": []
+  },
+  {
+    "id": "other",
+    "title": "기타 수지 · PC·PVA·열경화성",
+    "group": "플라스틱",
+    "feature": "특수 기능이나 반복 사용 기구 등에 쓰는 재료",
+    "caution": "PC와 멜라민·에폭시는 다른 재질입니다. 에폭시는 캔 내면 코팅 등에 쓰이며 일반 포장 필름과 구별합니다.",
+    "process": "재료에 따라 사출·코팅·경화 등 별도 공정",
+    "example": "PC 기구, 멜라민 식기, 캔 내면 코팅",
+    "check": "정확한 수지명, 용출 시험, 사용 범위·반복 사용 조건",
+    "sources": [
+      [
+        "식약처 · 플라스틱 용기 사용법",
+        "https://www.foodsafetykorea.go.kr/portal/board/boardDetail.do?bbs_no=bbs231&menu_grp=MENU_NEW01&menu_no=2694&ntctxt_no=1082124"
+      ]
+    ],
+    "photos": []
+  }
+]
