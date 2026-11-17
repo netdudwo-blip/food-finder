@@ -45,6 +45,36 @@
     ctx.beginPath();ctx.arc(x(i),y(v),2.8,0,Math.PI*2);ctx.fill();
    });
   });
+  const tip=canvas.parentElement.querySelector('.chart-tooltip');
+  function showPoint(index){
+   const date=dates[index];if(!date)return;
+   tip.replaceChildren(el('strong',date));
+   for(const set of sets){
+    const value=new Map(set.points).get(date);
+    const row=el('span',set.name+'  '+(value==null?'미제공':value.toLocaleString('ko-KR',{maximumFractionDigits:4})+' '+card.unit));
+    row.style.borderColor=set.color;tip.append(row);
+   }
+   tip.hidden=false;
+   tip.style.left=Math.min(Math.max(8,x(index)-90),Math.max(8,width-210))+'px';
+   tip.style.top='8px';canvas.dataset.point=String(index);
+  }
+  canvas.onpointermove=event=>{
+   const rect=canvas.getBoundingClientRect(),px=(event.clientX-rect.left)*width/rect.width;
+   if(px<left||px>width-right){tip.hidden=true;return}
+   showPoint(Math.max(0,Math.min(dates.length-1,Math.floor((px-left)/w*dates.length))));
+  };
+  canvas.onpointerleave=()=>{tip.hidden=true};
+  canvas.onfocus=()=>showPoint(dates.length-1);
+  canvas.onblur=()=>{tip.hidden=true};
+  canvas.onkeydown=event=>{
+   if(event.key==='Escape'){tip.hidden=true;return}
+   if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+   event.preventDefault();
+   const current=Number(canvas.dataset.point??dates.length-1);
+   const target=event.key==='Home'?0:event.key==='End'?dates.length-1:current+(event.key==='ArrowRight'?1:-1);
+   showPoint(Math.max(0,Math.min(dates.length-1,target)));
+  };
+
  }
  function cardView(card){
   const article=el('article');article.className='market-card';
@@ -65,18 +95,23 @@
   const summary=el('div');summary.className='market-summary';
   const legend=el('div');legend.className='market-legend';
   const canvas=el('canvas');canvas.setAttribute('role','img');canvas.style.height='205px';
+  canvas.tabIndex=0;
+  const chart=el('div');chart.className='market-chart';
+  const tooltip=el('div');tooltip.className='chart-tooltip';tooltip.hidden=true;tooltip.setAttribute('role','status');
+  chart.append(canvas,tooltip);
   const empty=el('div','자료 연결 준비 중');empty.className='market-empty';
   const detail=el('details'),wrap=el('div'),table=el('table');wrap.className='market-table-scroll';wrap.append(table);
   detail.append(el('summary','기간별 수치 보기'),wrap);
   const meta=el('p');meta.className='market-meta';
   const source=el('a',card.source+' ↗');source.href=card.url;source.target='_blank';source.rel='noopener noreferrer';
   const note=el('p',card.note);note.className='market-note';
-  article.append(summary,legend,card.series.length?canvas:empty,meta,source,detail,note);
+  article.append(summary,legend,card.series.length?chart:empty,meta,source,detail,note);
   if(card.id==='materials')detail.hidden=true;
   if(card.id==='cpi'){
    const extra=el('a','연간 통계 원본 ↗');extra.href='https://data.worldbank.org/indicator/FP.CPI.TOTL.ZG?locations=KR';extra.target='_blank';extra.rel='noopener noreferrer';article.append(extra);
   }
   function render(){
+   tooltip.hidden=true;
    const mode=select.value;
    const selected=card.series.map((s,i)=>({...s,color:colors[i%colors.length]})).filter((s,i)=>product.value==='all'||product.value===String(i));
    summary.replaceChildren();legend.replaceChildren();table.replaceChildren();
@@ -94,7 +129,7 @@
      const value=new Map(s[mode]).get(date);row.append(el('td',value==null?'미제공':value.toLocaleString('ko-KR',{maximumFractionDigits:2})));
     });table.append(row);
    });
-   canvas.setAttribute('aria-label',card.title+' '+selected.map(s=>s.name).join(' · ')+' '+(mode==='annual'?'연간':'월간')+' 그래프. 아래 기간별 수치에서 값을 확인할 수 있습니다.');
+   canvas.setAttribute('aria-label',card.title+' '+selected.map(s=>s.name).join(' · ')+' '+(mode==='annual'?'연간':'월간')+' 그래프. 마우스 또는 좌우 방향키로 상세값 확인. 아래 기간별 수치에서도 확인할 수 있습니다.');
    if(selected.length)plot(canvas,{...card,series:selected},mode);
   }
   select.onchange=render;product.onchange=render;

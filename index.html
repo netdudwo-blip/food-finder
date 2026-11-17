@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FOOD FINDER | 식품 구매 검색</title><meta name="description" content="식품안전나라 품목제조보고 기반 식품 검색 서비스"><link rel="stylesheet" href="/static/style.css?v=market-photo-1"></head><body>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FOOD FINDER | 식품 구매 검색</title><meta name="description" content="식품안전나라 품목제조보고 기반 식품 검색 서비스"><link rel="stylesheet" href="/static/style.css?v=packaging-1"></head><body>
 <header class="site-header">
   <div class="shell top">
     <a class="brand" href="/" aria-label="FOOD FINDER 홈">
@@ -16,6 +16,7 @@
       <a href="#products" aria-current="page">제품 검색</a>
       <a href="#companies">기업 검색</a>
       <a href="#compare">동일·유사제품 비교</a>
+      <a href="#packaging">식품 포장재</a>
       <a href="#market">식품 원자재 동향</a>
       <a href="#faq">FAQ·협업</a>
     </nav>
@@ -144,6 +145,13 @@
     </details>
   </section>
 </section>
+<section class="tabview sectionpage packaging-page" id="packaging" hidden>
+<div class="pack-intro"><span class="sectiontag">식품 포장재 백과</span><h1>사진으로 이해하는 식품 포장재</h1><p>생김새로 구분하고, 만드는 방법과 주문할 때 확인할 조건을 살펴보세요.</p></div>
+<div class="pack-toolbar"><label>종류<select id="pack-filter"><option value="">전체</option><option>필름·봉투</option><option>플라스틱 용기</option><option>종이·펄프</option><option>유리</option><option>금속</option></select></label><label class="pack-search">찾아보기<input id="pack-query" type="search" placeholder="재질·용도·제품명 검색"></label><span id="pack-count" role="status"></span></div>
+<div id="pack-list" class="pack-grid" aria-live="polite"></div>
+<details class="panel"><summary>생산 방식과 최소주문수량을 읽는 방법</summary><p>생산 공정은 해당 포장 형태의 일반적인 제조 흐름을 설명합니다. 사진에 나온 상품의 실제 제조 공정이 공개되지 않은 경우 업체별 공정으로 단정하지 않습니다.</p><p>기성품의 판매 묶음·박스 입수량과 맞춤 생산 MOQ는 서로 다릅니다. MOQ는 규격·재질·두께·인쇄·기존 금형 사용 여부를 정한 뒤 제조사 확인이 필요합니다. 비공개 조건은 미공개로 표시합니다.</p><p>식품 접촉 적합성, 전자레인지·오븐·살균 가능 여부는 개별 완제품의 시험성적서와 공급자 표시를 확인하세요. 뚜껑과 몸체 재질도 따로 확인해야 합니다.</p></details>
+<p class="pack-sources">분류 참고 <a href="https://m.blog.naver.com/utimegps/221569542967" target="_blank" rel="noopener noreferrer">식품포장재료의 종류</a> · 사진·규격 <a href="https://www.saeropnl.com/shop/index.php" target="_blank" rel="noopener noreferrer">새로피엔엘</a> · <a href="https://www.durepack.com/" target="_blank" rel="noopener noreferrer">두레</a> · 자료 확인 2026-11-17</p>
+</section>
 <section class="tabview sectionpage market-page" id="market" hidden>
  <div class="market-intro"><span class="sectiontag">식품 구매 지표</span><h1>식품 원자재 동향</h1><p>물가와 원료 가격의 흐름을 같은 화면에서 확인하세요.</p></div>
  <div class="market-toolbar"><p id="market-date">공식 통계 자료를 불러오는 중…</p><span>차트별 연간·월간 전환</span></div>
@@ -162,4 +170,4 @@
 <details class="panel"><summary>판매처 가격과 물가 차트는 어떻게 읽나요?</summary><p>동일제품은 확인한 배송비를 포함한 견적 총액으로 비교합니다. 견적 확인일과 판매 링크를 확인하세요. 온라인 검색 후보는 동일 여부와 배송비를 확인하기 전에는 가격 순위에 반영하지 않습니다. 물가 차트는 국가데이터처 발표월 기준이며 각 지표의 공식 출처는 원자재 동향 탭에서 열 수 있습니다.</p></details>
 <div class="panel"><h2>개발자에게 협업 제안</h2><p>데이터 연동, 판매처 견적 제공, 기능 개선을 제안해 주세요. GitHub 로그인 후 공개 게시되므로 연락처나 거래 조건 등 비공개 정보는 제외해 주세요.</p><a class="action" href="https://github.com/netdudwo-blip/food-finder/issues/new?title=%5B협업%20제안%5D%20&amp;body=제안%20목적%0A%0A협업하고%20싶은%20내용%0A">협업 제안 작성하기 ↗</a></div></section><footer class="site-footer">FOOD FINDER · Web 0.6 <span>공식 품목정보 출처: 식품안전나라 · 본 서비스는 공공기관 공식 사이트가 아닙니다.</span></footer></main>
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle"><div class="overlay" id="overlay"></div><div class="drawer"><div class="drawerhead"><span class="sectiontag">PRODUCT DETAILS</span><button id="close" aria-label="닫기">✕</button></div><div id="detailBody"></div></div></div>
-<script src="/static/search-ui.js?v=bid-1" defer></script><script src="/static/result-page.js" defer></script><script src="/static/app.js?v=bid-1" defer></script><script src="/static/company.js?v=company-2" defer></script><script src="/static/sections.js?v=bid-1" defer></script><script src="/static/buying.js?v=bid-2" defer></script><script src="/static/buying-view.js?v=bid-2" defer></script><script src="/static/hero.js" defer></script><script src="/static/market.js" defer></script></body></html>
+<script src="/static/search-ui.js?v=bid-1" defer></script><script src="/static/result-page.js" defer></script><script src="/static/app.js?v=bid-1" defer></script><script src="/static/company.js?v=company-2" defer></script><script src="/static/sections.js?v=bid-1" defer></script><script src="/static/buying.js?v=bid-2" defer></script><script src="/static/buying-view.js?v=bid-2" defer></script><script src="/static/hero.js" defer></script><script src="/static/market.js" defer></script><script src="/static/packaging.js" defer></script></body></html>
