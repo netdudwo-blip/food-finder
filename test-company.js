@@ -71,10 +71,36 @@ test('company UI supports examples, page counts, and an active result with struc
  assert.equal(nodes.sheet.hidden,false);
  assert.equal(nodes.sheet.scrolled,true);
  assert.match(nodes.sheet.textContent,/3,528,856,015,820 원/);
+ assert.match(nodes.sheet.textContent,/\(약 3조 5,289억 원\)/);
  assert.match(nodes.sheet.textContent,/2025-12-31 결산 · 별도·개별/);
  assert.match(nodes.sheet.textContent,/미확인국세청 상태 확인 자료 없음/);
  assert.equal(collect(nodes.sheet,x=>x.tag==='table').length,2);
  assert.deepEqual(seen.slice(0,2),[['/api/companies','대상','1'],['/api/companies','대상','2']]);
+});
+
+test('company UI summarizes won, thousand-won, and million-won filings without changing the reported figure',async()=>{
+ const samples=[
+  ['3000000000000','원','3,000,000,000,000 원 (3조 원)'],
+  ['300000000000','원','300,000,000,000 원 (3천억 원)'],
+  ['3000000','원','3,000,000 원 (3백만 원)'],
+  ['3000','천원','3,000 천원 (3백만 원)'],
+  ['3000','백만원','3,000 백만원 (30억 원)'],
+  ['123456789','원','123,456,789 원 (약 1억 2,346만 원)'],
+  ['9999','원','9,999 원 (약 1만 원)'],
+  ['500','원','500 원'],
+  ['3000','달러','3,000 달러']
+ ];
+ for(const [amount,unit,expected] of samples){
+  const sales={...savedSales,amount,unit};
+  const {nodes,collect}=mountCompanyUi(async url=>{
+   if(url.pathname==='/api/company')return {...companyRow,sales};
+   if(url.pathname==='/api/company/figures')return {sales,status:null};
+   return {total:1,page:1,pages:1,rows:[companyRow]};
+  });
+  nodes.form.elements.company.value=companyRow.biz;
+  nodes.form.onsubmit({preventDefault(){}});await tick();
+  assert.equal(collect(nodes.sheet,e=>e.className==='company-metric-value')[0].textContent,expected);
+ }
 });
 
 test('company UI distinguishes empty results from lookup errors and keeps known sales if figures fail',async()=>{
