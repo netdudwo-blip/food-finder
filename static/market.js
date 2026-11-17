@@ -6,7 +6,7 @@
  function plot(canvas,card,mode){
   const ctx=canvas.getContext('2d'),width=canvas.clientWidth||500,height=205,dpr=window.devicePixelRatio||1;
   canvas.width=width*dpr;canvas.height=height*dpr;ctx.scale(dpr,dpr);
-  const sets=card.series.map(s=>({name:s.name,points:s[mode]}));
+  const sets=card.series.map(s=>({name:s.name,points:s[mode],color:s.color}));
   const dates=[...new Set(sets.flatMap(s=>s.points.map(p=>p[0])))].sort().slice(-12);
   const values=sets.flatMap(s=>s.points.filter(p=>dates.includes(p[0])).map(p=>p[1]));
   if(!values.length)return;
@@ -28,7 +28,7 @@
   });
   sets.forEach((set,index)=>{
    const lookup=new Map(set.points);
-   ctx.strokeStyle=colors[index];ctx.fillStyle=colors[index];ctx.lineWidth=2;
+   ctx.strokeStyle=set.color;ctx.fillStyle=set.color;ctx.lineWidth=2;
    ctx.beginPath();let active=false;
    dates.forEach((date,i)=>{
     const value=lookup.get(date);
@@ -52,7 +52,16 @@
   const title=el('h2',card.title),select=el('select');
   select.setAttribute('aria-label',card.title+' 표시 기간');
   select.append(new Option('연간 · 최근 12년','annual'),new Option('월간 · 최근 12개월','monthly'));
-  head.append(title,select);article.append(head);
+  const product=el('select');
+  product.setAttribute('aria-label',card.title+' 종목');
+  product.append(new Option(card.series.length?'전체 종목':'자료 연결 준비 중','all'));
+  card.series.forEach((s,i)=>product.append(new Option(s.name,String(i))));
+  product.disabled=!card.series.length;
+  const controls=el('div');controls.className='market-controls';
+  const productLabel=el('label','종목'),periodLabel=el('label','기간');
+  productLabel.append(product);periodLabel.append(select);
+  controls.append(productLabel,periodLabel);
+  head.append(title);article.append(head,controls);
   const summary=el('div');summary.className='market-summary';
   const legend=el('div');legend.className='market-legend';
   const canvas=el('canvas');canvas.setAttribute('role','img');canvas.style.height='205px';
@@ -69,25 +78,26 @@
   }
   function render(){
    const mode=select.value;
+   const selected=card.series.map((s,i)=>({...s,color:colors[i%colors.length]})).filter((s,i)=>product.value==='all'||product.value===String(i));
    summary.replaceChildren();legend.replaceChildren();table.replaceChildren();
-   const dates=[...new Set(card.series.flatMap(s=>s[mode].map(p=>p[0])))].sort().slice(-12);
+   const dates=[...new Set(selected.flatMap(s=>s[mode].map(p=>p[0])))].sort().slice(-12);
  
    meta.textContent=dates.length?dates[0]+' ~ '+dates.at(-1)+' · '+card.unit:'연간·월간 원본 미연결';
-   for(const [i,s] of card.series.entries()){
+   for(const s of selected){
     const points=s[mode],last=points.at(-1);
-    const item=el('span',s.name);item.style.setProperty('--series',colors[i]);legend.append(item);
+    const item=el('span',s.name);item.style.setProperty('--series',s.color);legend.append(item);
     if(last){const value=el('span');value.append(el('strong',last[1].toLocaleString('ko-KR',{maximumFractionDigits:2})),el('small',card.unit+' · '+last[0]));summary.append(value)}
    }
-   const tr=el('tr');tr.append(el('th','기간'));card.series.forEach(s=>tr.append(el('th',s.name)));table.append(tr);
+   const tr=el('tr');tr.append(el('th','기간'));selected.forEach(s=>tr.append(el('th',s.name)));table.append(tr);
    dates.forEach(date=>{
-    const row=el('tr');row.append(el('th',date));card.series.forEach(s=>{
+    const row=el('tr');row.append(el('th',date));selected.forEach(s=>{
      const value=new Map(s[mode]).get(date);row.append(el('td',value==null?'미제공':value.toLocaleString('ko-KR',{maximumFractionDigits:2})));
     });table.append(row);
    });
-   canvas.setAttribute('aria-label',card.title+' '+(mode==='annual'?'연간':'월간')+' 그래프. 아래 기간별 수치에서 값을 확인할 수 있습니다.');
-   if(card.series.length)plot(canvas,card,mode);
+   canvas.setAttribute('aria-label',card.title+' '+selected.map(s=>s.name).join(' · ')+' '+(mode==='annual'?'연간':'월간')+' 그래프. 아래 기간별 수치에서 값을 확인할 수 있습니다.');
+   if(selected.length)plot(canvas,{...card,series:selected},mode);
   }
-  select.onchange=render;
+  select.onchange=render;product.onchange=render;
   new ResizeObserver(()=>{if(canvas.clientWidth)render()}).observe(article);
   host.append(article);render();
  }

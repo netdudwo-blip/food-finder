@@ -439,3 +439,6 @@
 .photo-controls [data-slide]{height:10px;padding:0;min-width:10px;background:#b7c6da}
 .photo-slide img{filter:saturate(.72)}
 .photo-wash{mix-blend-mode:normal}
+.market-controls{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px}
+.market-controls label{display:flex;align-items:center;gap:6px;font-size:11px;color:#718196}
+.market-controls select{max-width:190px}
