@@ -34,10 +34,30 @@
   const box=el('div',null,'company-metric'),primary=el('strong',value,'company-metric-value'),note=el('div',null,'company-metric-note');
   box.append(el('span',label,'company-metric-label'),primary,note);return {box,primary,note};
  }
+ const salesUnitInWon=new Map([['원',1n],['천원',1000n],['백만원',1000000n]]);
+ function summarizeSales(amount,unit){
+  const scale=salesUnitInWon.get(unit);if(!scale)return '';
+  const won=amount*scale,thousand=1000n,tenThousand=10000n,uk=100000000n,jo=1000000000000n,gyeong=10000000000000000n;
+  if(won<thousand)return '';
+  // Show at most two adjacent Korean units, rounding once after conversion to won.
+  const step=won>=gyeong?jo:won>=jo?uk:won>=tenThousand?tenThousand:thousand;
+  const rounded=((won+step/2n)/step)*step;
+  const parts=[];let remaining=rounded;
+  for(const [size,suffix] of [[gyeong,'경'],[jo,'조'],[uk,'억'],[tenThousand,'만'],[thousand,'천']]){
+   const count=remaining/size;remaining%=size;if(!count)continue;
+   if(count>=1000n&&count<=9000n&&count%1000n===0n)parts.push(String(count/1000n)+'천'+suffix);
+   else if(suffix==='만'&&count>=100n&&count<=900n&&count%100n===0n)parts.push(String(count/100n)+'백만');
+   else parts.push(count.toLocaleString('ko-KR')+suffix);
+  }
+  return (rounded===won?'':'약 ')+parts.join(' ')+' 원';
+ }
  function showSales(cell,sales){
   cell.note.replaceChildren();
   if(!sales||!/^\d+$/.test(String(sales.amount))){cell.primary.textContent='미제공';return;}
-  cell.primary.textContent=BigInt(sales.amount).toLocaleString('ko-KR')+' '+sales.unit;
+  const amount=BigInt(sales.amount),unit=String(sales.unit??'').replace(/\s/g,'');
+  cell.primary.textContent=amount.toLocaleString('ko-KR')+' '+sales.unit;
+  const summary=summarizeSales(amount,unit);
+  if(summary)cell.primary.append(' ',el('span','('+summary+')','company-sales-summary'));
   cell.note.append(sales.period+' 결산 · '+sales.basis+' · ',link(sales.label,sales.source));
  }
  async function openCompany(id,choice){
