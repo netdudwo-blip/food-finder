@@ -1,8 +1,87 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FOOD FINDER | 식품 구매 검색</title><meta name="description" content="식품안전나라 품목제조보고 기반 식품 검색 서비스"><link rel="stylesheet" href="/static/style.css"></head><body>
-<header><div class="shell top"><a class="brand" href="/">◈ <span>FOOD <b>FINDER</b></span></a><nav class="navlinks" aria-label="주요 메뉴"><a href="#products">제품 검색</a><a href="#companies">기업 검색</a><a href="#compare">동일·유사제품 비교</a><a href="#market">식품 원자재 동향</a><a href="#faq">FAQ·협업</a></nav><span class="topright"><span class="statusdot"></span> <span id="api-state">__API_STATUS__</span></span></div></header>
-<main class="shell"><div id="products" class="tabview"><section class="hero"><div class="hero-banner"><span class="hero-pill">식품 구매 담당자를 위한 검색 도구</span><span class="hero-ver">FOOD FINDER WEB · 0.6</span></div><span class="eyebrow">FOOD INTELLIGENCE WORKSPACE · MVP 0.1</span><h1>식품을 찾는 가장<br><em>명확한 방법.</em></h1><p>식품안전나라 품목제조보고번호와 제조사로 같은 이름의 제품도 정확하게 구분하세요.</p></section>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FOOD FINDER | 식품 구매 검색</title><meta name="description" content="식품안전나라 품목제조보고 기반 식품 검색 서비스"><link rel="stylesheet" href="/static/style.css?v=blue-1"></head><body>
+<header class="site-header">
+  <div class="shell top">
+    <a class="brand" href="/" aria-label="FOOD FINDER 홈">
+      <svg class="brand-mark" viewBox="0 0 44 40" width="39" height="35" aria-hidden="true" focusable="false">
+        <circle cx="5" cy="26" r="2.4" fill="#79aaff"/>
+        <circle cx="10" cy="32" r="2.9" fill="#4f8bfa"/>
+        <circle cx="18" cy="35" r="2.1" fill="#2868de"/>
+        <path d="M11 23a12 12 0 1 1 20 5l6 6" fill="none" stroke="#1956d0" stroke-width="4.2" stroke-linecap="round"/>
+        <path d="M17 20c0-5 4.5-8.5 10.7-8.7-.6 5.8-4.2 9.8-9.4 9.8H17Z" fill="#3578ee"/>
+        <path d="M16.9 23.2l5.7-6" fill="none" stroke="#1956d0" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span>FOOD <b>FINDER</b></span>
+    </a>
+    <nav class="navlinks" aria-label="주요 메뉴">
+      <a href="#products" aria-current="page">제품 검색</a>
+      <a href="#companies">기업 검색</a>
+      <a href="#compare">동일·유사제품 비교</a>
+      <a href="#market">식품 원자재 동향</a>
+      <a href="#faq">FAQ·협업</a>
+    </nav>
+    <span class="topright"><span class="statusdot" aria-hidden="true"></span><span id="api-state">__API_STATUS__</span></span>
+  </div>
+</header>
+<main class="site-main">
+<div id="products" class="tabview intro">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="shell hero-inner">
+      <div class="hero-copy">
+        <div class="hero-banner"><span class="hero-pill">식품 구매 담당자를 위한 검색 도구</span><span class="hero-ver">FOOD FINDER WEB · 0.6</span></div>
+        <span class="eyebrow">FOOD INTELLIGENCE WORKSPACE</span>
+        <h1 id="hero-title">
+          <span class="hero-line"><span>식품을 찾는 가장</span></span>
+          <span class="hero-line"><em>명확한 방법</em></span>
+        </h1>
+        <p>식품안전나라 품목제조보고번호와 제조사로 같은 이름의 제품도 정확하게 구분하세요.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 480 340" fill="none" focusable="false">
+          <defs>
+            <linearGradient id="pack-light" x1="170" y1="72" x2="317" y2="259" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#fff"/><stop offset="1" stop-color="#dbe9ff"/>
+            </linearGradient>
+            <linearGradient id="pack-blue" x1="177" y1="150" x2="298" y2="241" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#397bfa"/><stop offset="1" stop-color="#154fc3"/>
+            </linearGradient>
+            <linearGradient id="scan-blue" x1="100" y1="0" x2="384" y2="0" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#4b91ff" stop-opacity="0"/><stop offset=".2" stop-color="#5898ff"/><stop offset=".8" stop-color="#286eef"/><stop offset="1" stop-color="#4b91ff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <circle cx="244" cy="169" r="143" fill="#e5efff" fill-opacity=".66"/>
+          <circle cx="244" cy="169" r="142.5" stroke="#c8dcfb"/>
+          <circle cx="244" cy="169" r="119" stroke="#c6daf9" stroke-dasharray="2 7"/>
+          <path d="M52 242c55 43 277 23 360-35 30-21 19-52-22-64M69 109c28-17 63-27 116-37" stroke="#afcdfa" stroke-dasharray="3 7" stroke-linecap="round"/>
+          <circle cx="67" cy="110" r="4" fill="#7ba9fa"/>
+          <circle cx="399" cy="214" r="5" fill="#4e89f1"/>
+          <circle cx="346" cy="63" r="3.5" fill="#8ab4fc"/>
+          <ellipse cx="246" cy="273" rx="97" ry="13" fill="#a0bdf0" opacity=".24"/>
+          <g transform="rotate(-9 239 172)">
+            <path d="M185 96l24-26h87l-20 26z" fill="#f8fbff" stroke="#b2cbf5"/>
+            <path d="M276 96l20-26v156l-20 28z" fill="#b9d2fb" stroke="#9dbdf2"/>
+            <rect x="164" y="96" width="113" height="158" rx="11" fill="url(#pack-light)" stroke="#aac6f5"/>
+            <path d="M164 155h113v62H164z" fill="url(#pack-blue)"/>
+            <path d="M277 155l19-25v62l-19 25z" fill="#133f9c"/>
+            <path d="M181 117h33m-33 8h20" stroke="#749de5" stroke-width="2" stroke-linecap="round"/>
+            <path d="M213 191c0-12 10-21 27-21-1 14-10 24-24 24h-3z" fill="#fff"/>
+            <path d="M210 200l17-19" stroke="#b8d8ff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M182 229v11m5-11v11m5-11v11m6-11v11m4-11v11m6-11v11m6-11v11" stroke="#5f83b7" stroke-width="1.8"/>
+          </g>
+          <path d="M119 134v-20a13 13 0 0 1 13-13h20m183 0h20a13 13 0 0 1 13 13v20m0 78v20a13 13 0 0 1-13 13h-20m-183 0h-20a13 13 0 0 1-13-13v-20" stroke="#659bf3" stroke-width="2.5" stroke-linecap="round"/>
+          <g class="hero-scan">
+            <path d="M100 194h284" stroke="url(#scan-blue)" stroke-width="10" opacity=".16"/>
+            <path d="M100 194h284" stroke="url(#scan-blue)" stroke-width="2"/>
+          </g>
+          <circle cx="350" cy="234" r="28" fill="white" stroke="#c4dafa"/>
+          <path d="M338 234l8 8 15-16" stroke="#1d60dc" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  </section>
+  <div class="shell product-workspace">
 <section class="finder" id="search"><div class="finderhead"><div><span class="sectiontag">01 / PRODUCT DISCOVERY</span><h2>제품 통합 검색</h2></div><div class="modes"><label for="mode">데이터</label><select id="mode"><option value="live" selected>식품안전나라 실시간</option><option value="demo">체험 데이터</option></select></div></div><form id="searchForm"><label for="searchField">검색 대상</label><select id="searchField"><option value="all">전체 항목</option><option value="PRDLST_NM">제품명</option><option value="PRDLST_REPORT_NO">품목제조보고번호</option><option value="LCNS_NO">인허가번호</option><option value="PRDLST_DCNM">식품유형</option><option value="BSSH_NM">제조사명</option></select><div class="search-wrap"><div class="searchbar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg><input id="query" aria-label="제품 통합 검색어" aria-expanded="false" aria-controls="history" placeholder="제품명·품목번호·인허가번호·유형·제조사" minlength="2" maxlength="80" autocomplete="off" required><button type="submit" id="searchBtn">검색하기 ↗</button></div><div id="history" class="history hidden" aria-label="최근 검색기록"></div></div></form><p class="hint" id="searchHint">__HINT__</p></section>
 <section class="results" id="results" aria-live="polite"><div class="sectionbar"><div><span class="sectiontag">02 / SEARCH RESULTS</span><h2>검색 결과 <span id="count">—</span></h2></div><div class="result-controls"><span id="resultmode" class="smalllabel">검색 전</span><label for="pageSize">표시 건수</label><select id="pageSize"><option value="10">10개 보기</option><option value="30">30개 보기</option><option value="50">50개 보기</option></select></div></div><div class="filters"><label for="sort">정렬</label><select id="sort"><option value="all">전체</option><option value="manufacturer">제조사별</option><option value="date">보고일자순 (최신)</option><option value="type">식품유형별</option></select><label for="manufacturer">제조사</label><select id="manufacturer"><option value="">전체</option></select><label for="foodType">식품유형</label><select id="foodType"><option value="">전체</option></select></div><div class="results-tip" id="results-tip">공식 데이터의 품목보고번호와 제조사를 확인한 후 제품을 선택하세요. 온라인 판매 여부와 별개로 등록 제품을 찾을 수 있어요.</div><div id="notice" class="notice hidden"></div><div id="resultlist" class="resultlist"><div class="empty"><div class="bigicon">⌕</div><strong>어떤 식품을 찾고 계신가요?</strong><p>제품명, 제조사명, 식품유형 또는 번호를 입력해 주세요.</p></div></div><nav id="pagination" class="pagination" aria-label="검색 결과 페이지"></nav></section>
+  </div>
 </div><section class="tabview sectionpage" id="companies" hidden>
 <h1>기업 검색</h1><p>법인명이나 등록번호로 거래처를 찾아 기업 정보와 최근 확인된 연간 매출을 확인하세요.</p>
 <form id="company-form" class="panel"><label for="company-query">법인명 · 사업자등록번호 · 법인등록번호</label><div class="company-search"><input id="company-query" name="company" maxlength="80" placeholder="예: 대상" required><button type="submit">기업 검색</button></div></form>
@@ -17,6 +96,6 @@
 <details class="panel" open><summary>제품과 영양정보는 어디에서 가져오나요?</summary><p>제품 검색은 <a href="https://www.foodsafetykorea.go.kr/api/openApiInfo.do?svc_no=I1250">식품안전나라 품목제조보고</a>를 조회합니다. <a href="https://www.data.go.kr/data/15127578/openapi.do">식약처 식품영양성분DB</a>에서 품목번호가 한 건으로 일치할 때 대분류와 기준량당 에너지를 표시합니다. 값이 없거나 조회에 실패하면 결과에 사유가 표시됩니다.</p></details>
 <details class="panel"><summary>검색 결과를 어떻게 좁히나요?</summary><p>검색 대상을 선택하거나 결과에서 제조사·식품유형을 선택하세요. 보고일자 최신순과 10·30·50개 보기를 사용할 수 있습니다. 원본 조회가 5,000행을 넘으면 검색어를 좁혀 주세요.</p><a href="/diagnostics">연결 진단 열기</a></details>
 <details class="panel"><summary>판매처 가격과 물가 차트는 어떻게 읽나요?</summary><p>판매처 공개 페이지에서 확인한 가격과 직접 입력한 견적을 구분해 표시합니다. 같은 기준량의 상품가를 비교하고 배송비·쿠폰·재고는 판매처에서 확인하세요. 물가 차트는 국가데이터처 발표월 기준이며 각 지표의 공식 출처는 원자재 동향 탭에서 열 수 있습니다.</p></details>
-<div class="panel"><h2>개발자에게 협업 제안</h2><p>데이터 연동, 판매처 견적 제공, 기능 개선을 제안해 주세요. GitHub 로그인 후 공개 게시되므로 연락처나 거래 조건 등 비공개 정보는 제외해 주세요.</p><a class="action" href="https://github.com/netdudwo-blip/food-finder/issues/new?title=%5B협업%20제안%5D%20&amp;body=제안%20목적%0A%0A협업하고%20싶은%20내용%0A">협업 제안 작성하기 ↗</a></div></section><footer>FOOD FINDER · Web 0.6 <span>공식 품목정보 출처: 식품안전나라 · 본 서비스는 공공기관 공식 사이트가 아닙니다.</span></footer></main>
+<div class="panel"><h2>개발자에게 협업 제안</h2><p>데이터 연동, 판매처 견적 제공, 기능 개선을 제안해 주세요. GitHub 로그인 후 공개 게시되므로 연락처나 거래 조건 등 비공개 정보는 제외해 주세요.</p><a class="action" href="https://github.com/netdudwo-blip/food-finder/issues/new?title=%5B협업%20제안%5D%20&amp;body=제안%20목적%0A%0A협업하고%20싶은%20내용%0A">협업 제안 작성하기 ↗</a></div></section><footer class="site-footer">FOOD FINDER · Web 0.6 <span>공식 품목정보 출처: 식품안전나라 · 본 서비스는 공공기관 공식 사이트가 아닙니다.</span></footer></main>
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle"><div class="overlay" id="overlay"></div><div class="drawer"><div class="drawerhead"><span class="sectiontag">PRODUCT DETAILS</span><button id="close" aria-label="닫기">✕</button></div><div id="detailBody"></div></div></div>
-<script src="/static/search-ui.js" defer></script><script src="/static/result-page.js" defer></script><script src="/static/app.js" defer></script><script src="/static/company.js" defer></script><script src="/static/sections.js" defer></script></body></html>
+<script src="/static/search-ui.js" defer></script><script src="/static/result-page.js" defer></script><script src="/static/app.js" defer></script><script src="/static/company.js" defer></script><script src="/static/sections.js?v=blue-1" defer></script></body></html>

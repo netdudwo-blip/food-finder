@@ -5,6 +5,7 @@
   function navigate() {
     const target = panels.find(panel => '#' + panel.id === location.hash) || panels[0];
     panels.forEach(panel => { panel.hidden = panel !== target; });
+    if (target !== panels[0]) panels[0].classList.remove('intro');
     document.querySelectorAll('.navlinks a').forEach(link => {
       if (link.hash === '#' + target.id) link.setAttribute('aria-current', 'page');
       else link.removeAttribute('aria-current');
@@ -13,6 +14,14 @@
   }
   window.addEventListener('hashchange', navigate);
   navigate();
+  const finder = byId('search');
+  const finishIntro = event => {
+    if (event.target === finder && (!event.animationName || event.animationName === 'home-arrive')) {
+      panels[0].classList.remove('intro');
+    }
+  };
+  finder.addEventListener('animationend', finishIntro, {once: true});
+  finder.addEventListener('animationcancel', finishIntro, {once: true});
 
   function node(tag, value, className) {
     const el = document.createElement(tag);
