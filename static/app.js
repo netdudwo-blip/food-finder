@@ -69,6 +69,25 @@ function renderResults(wantedPage=1){
   button('다음',page+1,page>=data.pages);
  loadNutrition(snapshot);
 }
+let searchLoadingTimer;
+function stopSearchLoading(){
+ clearInterval(searchLoadingTimer);searchLoadingTimer=null;
+ $('resultlist').setAttribute('aria-busy','false');
+}
+function startSearchLoading(id){
+ stopSearchLoading();
+ const started=Date.now();
+ const spinner='<span class="ios-spinner" aria-hidden="true">'+Array.from({length:12},(_,i)=>`<i style="--spoke:${i}"></i>`).join('')+'</span>';
+ $('count').innerHTML=spinner;
+ $('resultlist').setAttribute('aria-busy','true');
+ $('resultlist').innerHTML='<div class="search-loading"><div class="search-loading-motion">'+spinner+'</div><p class="search-loading-title" role="status">데이터를 가져오는 중입니다. 잠시 기다려주세요.</p><span class="search-loading-time" id="search-elapsed" aria-hidden="true">0초 경과</span><p class="search-loading-note" id="search-wait-note">식품안전나라에서 제품 정보를 확인하고 있습니다.</p></div>';
+ searchLoadingTimer=setInterval(()=>{
+  if(id!==requestId)return;
+  const seconds=Math.floor((Date.now()-started)/1000);
+  $('search-elapsed').textContent=seconds+'초 경과';
+  if(seconds>=15)$('search-wait-note').textContent='공식 데이터 응답이 지연되고 있습니다. 응답이 도착하면 결과를 표시합니다.';
+ },1000);
+}
 async function doSearch(query,wantedPage=1,newSearch=false){
  const q=query.trim();if(q.length<2||q.length>80){alertNotice('검색어는 2~80자로 입력하세요.');return}
  if(newSearch){facets('manufacturer',[],'');facets('foodType',[],'');saveHistory(q)}
@@ -76,7 +95,7 @@ async function doSearch(query,wantedPage=1,newSearch=false){
  controller?.abort();controller=new AbortController();const id=++requestId;
  products=[];$('pagination').replaceChildren();
  const btn=$('searchBtn');btn.disabled=true;btn.textContent='검색 중…';$('resultmode').textContent='검색 중';
- $('resultlist').innerHTML='<div class="loading">제품 정보를 조회하고 있습니다…</div>';clearNotice();$('count').textContent='…';
+ startSearchLoading(id);clearNotice();
  try{
   const data=await SearchUI.findProducts(q,currentMode,$('searchField').value,controller.signal);if(id!==requestId)return;
   snapshot={rows:data.rows,loading:false};
@@ -88,7 +107,7 @@ async function doSearch(query,wantedPage=1,newSearch=false){
   renderResults(wantedPage);
   if(data.checkedAt)alertNotice('자료 확인 '+new Date(data.checkedAt).toLocaleString('ko-KR')+(data.stale?' · 최근 저장 결과 표시 중, 서버에서 갱신하고 있습니다.':''));
  }catch(e){if(id!==requestId||e.name==='AbortError')return;$('resultmode').textContent='검색 실패';$('count').textContent='—';$('results-tip').textContent='검색 결과를 가져오지 못했습니다.';$('resultlist').innerHTML='<div class="empty"><strong>검색 결과를 표시할 수 없습니다.</strong><p>오류 안내를 확인해 주세요.</p></div>';alertNotice(e.message)}
- finally{if(id===requestId){btn.disabled=false;btn.textContent='검색하기 ↗'}}
+ finally{if(id===requestId){stopSearchLoading();btn.disabled=false;btn.textContent='검색하기 ↗'}}
 }
 $('query').addEventListener('focus',showHistory);
 $('query').addEventListener('click',showHistory);
